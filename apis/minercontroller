@@ -1,5 +1,79 @@
-function run()
-    print("miner started")
-    print("miner done")
+navigator = {}
+function navigator.getPosition() print("default miner navigator") end
+function navigator.hasHome() print("default miner navigator") end
+function navigator.setHome() print("default miner navigator") end
+network = {}
 
+
+local miner = {}
+function miner.turnLeft()
+    turtle.turnLeft()
+end
+function miner.seesAChest()
+    local success, details = turtle.inspect()
+    if success then
+        if string.match(string.lower(details.name), "chest") then
+            print("Miner: found a chest" .. details.name)
+            return true, details.name
+        end
+    end
+    return false
+end
+function miner.turnAround()
+    turtle.turnRight()
+    turtle.turnRight()
+end
+
+local function findHome()
+    while not miner.seesAChest() do
+        print("Miner: I need a chest to make this my home")
+        os.sleep(2)
+        miner.turnLeft()
+        print("Miner: I am looking for a chest")
+    end
+    miner.turnAround()
+
+    print("Miner: I like this place")
+    navigator.setHome(navigator.getPosition())
+end
+
+
+local orders = {}
+function orders.mine()
+    print("Miner: start mining")
+end
+function orders.shutdown()
+    print("Miner: shutdown")
+end
+
+function receiveOrder()
+    while true do
+        print("Miner: Awaiting orders")
+        local id, orderName = network.receive()
+        if orders[orderName] then
+            print("Miner: Received orders")
+            network.send(id, "receivedOrder:" .. orderName)
+            return orders[orderName], orderName
+        end
+    end
+end
+
+function init(navigationController, networkController)
+    navigator = navigationController
+    network = networkController
+end
+
+function run()
+    print("Miner: started")
+
+    if not navigator.hasHome() then
+        findHome()
+    end
+
+    repeat
+        local executeOrder, orderName = receiveOrder()
+        executeOrder()
+    until orderName == "shutdown"
+
+    print("Miner: done")
 end

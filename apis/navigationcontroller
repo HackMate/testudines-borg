@@ -1,0 +1,52 @@
+local state = {
+    home = {
+        file = ".navigation-home",
+        pos = nil
+    }
+}
+
+
+local function loadState()
+    for section, _  in pairs(state) do
+        local file = fs.open(state[section].file, "r")
+        if file then
+            local data = file.readAll()
+            file.close()
+            state[section] = textutils.unserialize(data)
+        end
+    end
+end
+
+local function saveState()
+    for section, _ in pairs(state) do
+        local data = textutils.serialize(state[section])
+        local file = fs.open(state[section].file, "w")
+        if not file then
+            print("Could not opens state file '" .. state[section].file .. "' for writing.")
+        end
+        file.write(data)
+        file.close()
+    end
+end
+
+function setHome(x, y, z)
+    if x then
+        print("Navigator: Setting home position " .. x .. "," .. y .. "," .. z)
+        state["home"].pos = {x = x, y = y, z = z }
+        saveState()
+    else
+        error("Navigator: Could not obtain the gps location of this position")
+    end
+end
+
+function hasHome()
+    return state["home"].pos ~= nil
+end
+
+function getPosition()
+    return gps.locate()
+end
+
+function init()
+    loadState()
+end

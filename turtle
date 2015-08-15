@@ -1,5 +1,6 @@
 os.loadAPI("apis/rednetcontroller")
 os.loadAPI("apis/minercontroller")
+os.loadAPI("apis/navigationcontroller")
 
 
 function pingHandler(id)
@@ -24,5 +25,8 @@ rednetcontroller.addMessageHandler("ping", pingHandler)
 rednetcontroller.addMessageHandler("shutdown", shutDownHandler)
 rednetcontroller.addMessageHandler("position", positionHandler)
 
+rednetcontroller.init()
+navigationcontroller.init()
+minercontroller.init(navigationcontroller, rednetcontroller)
 
 parallel.waitForAll(minercontroller.run, rednetcontroller.run)

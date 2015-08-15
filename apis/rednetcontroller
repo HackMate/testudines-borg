@@ -40,8 +40,10 @@ local connectionEstablished = false
 function openConnection()
     try(
         function()
+            print("Rednet: connecting")
             rednet.open(getModemPostion())
             connectionEstablished = true
+            print("Rednet: connected")
         end
     )
 end
@@ -49,8 +51,10 @@ end
 function closeConnection()
     try(
         function()
+            print("Rednet: disconnecting")
             rednet.close(getModemPostion())
             connectionEstablished = false
+            print("Rednet: disconnected")
         end
     )
 end
@@ -60,18 +64,18 @@ function send(id, message)
     return rednet.send(id, message)
 end
 
-function run()
-    print("Rednet: connecting")
-    openConnection()
-    print("Rednet: connected")
+function receive(filter, timeout)
+    return rednet.receive(filter, timeout)
+end
 
+function init()
+    openConnection()
+end
+
+function run()
     while connectionEstablished do
         local id, message = rednet.receive()
         print("Rednet: received message '" .. message .. "' with id: " .. id)
         handleReceivedMessage(id, message)
     end
-
-    print("Rednet: disconnecting")
-    closeConnection()
-    print("Rednet: disconnected")
 end
