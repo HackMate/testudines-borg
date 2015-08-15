@@ -1,0 +1,21 @@
+arg = {...}
+
+function receive()
+    local id, message = rednet.receive(2)
+    if id then
+        print(id .. ": " .. message)
+    else
+        print("Did not receive any response")
+    end
+end
+
+function sendCommand()
+    rednet.broadcast(arg[1])
+end
+
+-- main --
+rednetcontroller.openConnection()
+
+parallel.waitForAll(receive, sendCommand)  -- Run both functions in parallel and wait until both of them completes.
+
+rednetcontroller.closeConnection()

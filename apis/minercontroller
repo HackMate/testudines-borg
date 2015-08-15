@@ -1,0 +1,5 @@
+function run()
+    print("miner started")
+    print("miner done")
+
+end

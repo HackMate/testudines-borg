@@ -1,0 +1,28 @@
+os.loadAPI("apis/rednetcontroller")
+os.loadAPI("apis/minercontroller")
+
+
+function pingHandler(id)
+    print("sending pong")
+    rednetcontroller.send(id, "pong")
+end
+
+function shutDownHandler(id, message)
+    rednetcontroller.send(id, "shutting down")
+    rednetcontroller.closeConnection()
+end
+
+function positionHandler(id)
+    print("sending position")
+    local x, y, z = gps.locate()
+    if not x then x = -1;y=-1;z=-1 end
+    rednetcontroller.send(id, "pos:" .. x .. "," .. y .. "," .. z)
+end
+
+-- main --
+rednetcontroller.addMessageHandler("ping", pingHandler)
+rednetcontroller.addMessageHandler("shutdown", shutDownHandler)
+rednetcontroller.addMessageHandler("position", positionHandler)
+
+
+parallel.waitForAll(minercontroller.run, rednetcontroller.run)

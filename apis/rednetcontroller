@@ -1,0 +1,77 @@
+
+local function getModemPostion()
+    for _, side in pairs(rs.getSides()) do
+        if peripheral.getType(side) == "modem" then
+            return side
+        end
+    end
+    error("Rednet: Turtle does not seem to have a modem.")
+end
+
+-- Helper that wrapps error messages --
+local function try(func)
+    local success, message = pcall(func)
+    if not success then
+        error("Rednet: " .. message)
+    end
+end
+
+local messageHandler = {}
+
+function addMessageHandler(message, handler)
+    messageHandler[message] = handler
+end
+
+function removeMessageHandler(message)
+    messageHandler[message] = nil
+end
+
+-- returns false in case a message could not be handled --
+local function handleReceivedMessage(id, message)
+    if messageHandler[message] then
+        local handler = messageHandler[message]
+        return handler(id, message)
+    end
+    return true
+end
+
+local connectionEstablished = false
+
+function openConnection()
+    try(
+        function()
+            rednet.open(getModemPostion())
+            connectionEstablished = true
+        end
+    )
+end
+
+function closeConnection()
+    try(
+        function()
+            rednet.close(getModemPostion())
+            connectionEstablished = false
+        end
+    )
+end
+
+function send(id, message)
+    print("send " .. message)
+    return rednet.send(id, message)
+end
+
+function run()
+    print("Rednet: connecting")
+    openConnection()
+    print("Rednet: connected")
+
+    while connectionEstablished do
+        local id, message = rednet.receive()
+        print("Rednet: received message '" .. message .. "' with id: " .. id)
+        handleReceivedMessage(id, message)
+    end
+
+    print("Rednet: disconnecting")
+    closeConnection()
+    print("Rednet: disconnected")
+end
