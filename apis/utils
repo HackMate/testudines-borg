@@ -1,0 +1,13 @@
+
+local validFuels = {}
+validFuels["minecraft:coal"] = true
+validFuels["minecraft:lava_bucket"] = true
+validFuels["minecraft:coal_block"] = true
+
+function isFuel(detail)
+    if detail and detail.name and validFuels[detail.name] then
+        return true
+    else
+        return false
+    end
+end

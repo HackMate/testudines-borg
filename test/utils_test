@@ -1,0 +1,18 @@
+os.loadAPI("/apis/utils")
+
+local itemDetail = {}
+
+print("test: utils.isFuel()")
+assert(utils.isFuel(nil) == false, "input of nil should be false")
+assert(utils.isFuel(itemDetail) == false, "an empty table should be false")
+
+itemDetail.name = "minecraft:coal"
+assert(utils.isFuel(itemDetail), "mincraft:coal is a valid fuel")
+
+itemDetail.name = "minecraft:coal_block"
+assert(utils.isFuel(itemDetail), "minecraft:coal_block is a valid fuel")
+
+itemDetail.name = "minecraft:lava_bucket"
+assert(utils.isFuel(itemDetail), "minecraft:lava_bucket is a valid fuel")
+
+print("test: successful")

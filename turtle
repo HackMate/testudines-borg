@@ -22,3 +22,5 @@ navigation.init(network)
 miner.init(navigation)
 
 parallel.waitForAll(miner.run, network.run)
+print("rebooting")
+os.reboot()

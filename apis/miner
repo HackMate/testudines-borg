@@ -1,3 +1,5 @@
+os.loadAPI("/apis/utils")
+
 -- Navigator interface --
 navigator = {}
 function navigator.hasHome() error("hasHome must be implemented") end
@@ -11,6 +13,8 @@ function navigator.getHomePosition() error("getHomePosition must be implemented"
 function navigator.clearHome() error("clearHome must be implemented") end
 
 local state = {
+       currentOrder = nil,
+       queuedOrders = {},
        fuel = {level = 0, inSlot = nil}
     }
 
@@ -27,12 +31,18 @@ function orders.refuel(commanderId, message)
         if needsFuel() then
             network.send(commanderId, "Miner: I don't have fuel, going home.")
             navigator.goHome()
-            navigator.getFuel()
+            if navigator.getFuel() and hasFuel() then
+                useFuel()
+            else
+                -- Order did not finish.
+                return false
+            end
         end
     else
-        network.send(commanderId,
-            "Miner: I do not need to refuel fuelLevel: " .. turtle.getFuelLevel() ..
-                    " distanceToHome: " .. navigator.distanceToHome())
+        local message = "Miner: I do not need to refuel fuelLevel: " .. turtle.getFuelLevel() ..
+                " distanceToHome: " .. navigator.distanceToHome()
+        print(message)
+        network.send(commanderId, message)
     end
 end
 function orders.fuelLevel(commanderId)
@@ -72,45 +82,57 @@ function orders.shutdown(commanderId, _)
     network.send(commanderId, "Miner: shutting down")
 end
 function orders.dance(commanderId)
+    if needsFuel() then
+        print("Miner: need-fuel, cannot dance without some juice")
+        network.send(commanderId, "Miner: need-fuel, cannot dance without some juice")
+        return true
+    end
     print("Miner: let's dance")
     network.send(commanderId, "Miner: will dance")
     turtle.forward()
     turtle.forward()
-    while true do
+    for i=1,2,1 do
         makeAmove(turtle.up)
         makeAmove(turtle.up)
         makeAmove(turtle.forward)
         makeAmove(turtle.down)
         makeAmove(turtle.turnRight)
         makeAmove(turtle.forward)
-        makeAmove(turtle.forward)
         makeAmove(turtle.back)
-        makeAmove(turtle.back)
-        makeAmove(turtle.back)
-        makeAmove(turtle.back)
-        makeAmove(turtle.forward)
-        makeAmove(turtle.forward)
+
         makeAmove(turtle.turnLeft)
+        makeAmove(turtle.turnLeft)
+
+        makeAmove(turtle.forward)
+        makeAmove(turtle.back)
+        makeAmove(turtle.turnRight)
         makeAmove(turtle.down)
         makeAmove(turtle.back)
     end
+    makeAmove(turtle.back)
+    makeAmove(turtle.back)
+    return false
 end
 
-function makeAmove(move)
+function makeAmove(move, retries)
+    if retries and retries < 1 then
+        error("Miner: cannot move")
+    end
     if not move() then
+        if not retries then
+            retries = 10
+        end
         turtle.attack()
-        makeAmove(move)
+        makeAmove(move, retries-1)
     end
 end
 
 function receiveOrder()
-    while true do
-        print("Miner: Awaiting orders")
-        local id, orderName = network.receive()
-        if orders[orderName] then
-            print("Miner: Received orders")
-            return orders[orderName], id, orderName
-        end
+    print("Miner: Awaiting orders")
+    local id, orderName = network.receive(10)
+    if orders[orderName] then
+        print("Miner: Received orders")
+        return orders[orderName], id, orderName
     end
 end
 
@@ -118,7 +140,7 @@ function needsFuel()
     state.fuel.level = turtle.getFuelLevel()
     local distanceToHome = navigator.distanceToHome()
     print("Miner: I have ", state.fuel.level, " and have distance to home of ", distanceToHome)
-    return state.fuel.level < distanceToHome * 2
+    return state.fuel.level < distanceToHome * 2 or distanceToHome == 0 and state.fuel.level == 0
 end
 
 function hasFuel()
@@ -128,8 +150,8 @@ function hasFuel()
         local success, _ = pcall(function() turtle.select(slot) end)
         if success then
             local details = turtle.getItemDetail()
-            if details and string.match(string.lower(details.name), "coal") then
-                print("Miner: has fuel on him" .. details.name)
+            if utils.isFuel(details) then
+                print("Miner: I have fuel " .. details.name)
                 state.fuel.inSlot = slot
                 return true, details.name
             end
@@ -139,9 +161,13 @@ function hasFuel()
     return false
 end
 
-local function useFuel()
+function useFuel(slot)
+    if slot then
+        state.fuel.inSlot = slot
+    end
     if state.fuel.inSlot then
-        return turtle.select(state.fuel.inSlot) and  turtle.refuel()
+        turtle.select(state.fuel.inSlot)
+        return turtle.refuel()
     else
         return false
     end
@@ -165,10 +191,26 @@ function run()
     end
 
     repeat
-        local executeOrder, commanderId, command = receiveOrder()
+        local newOrder, commanderId, command = receiveOrder()
 
-        local success, message = pcall( function() executeOrder(commanderId, command) end )
+        local success, message = pcall(function()
+            if newOrder then
+                state.currentOrder = newOrder
+            end
+            if state.currentOrder then
+                if not newOrder then
+                    print("Miner: Resuming current order")
+                end
+                if state.currentOrder(commanderId, command) == false then
+                    print("Miner: order has not been finished, resuming later")
+                else
+                    print("Miner: order has been finished")
+                    state.currentOrder = nil
+                end
+            end
+        end)
         if not success then
+            state.currentOrder = nil
             network.send(commanderId, "Miner: failed to execute order: " .. message)
         end
     until command == "shutdown"

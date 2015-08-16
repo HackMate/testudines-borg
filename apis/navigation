@@ -1,4 +1,5 @@
 os.loadAPI("/apis/model/position")
+os.loadAPI("/apis/utils")
 
 -- Interface of the required network-controller --
 network = {}
@@ -116,18 +117,41 @@ function clearHome()
     return true
 end
 
+local isNeeded = {}
+isNeeded["minecraft:torch"] = 64
+function needItem(detail)
+    return detail and isNeeded[detail.name]
+end
+
 function takeFuelFromChest()
-    print("Navigation: I cannot take fuel from a chest")
-    return true
+    local hasTakenFuel = false
+    for i=1,16,1 do
+        if not needItem(turtle.getItemDetail(i)) then
+            turtle.select(i);turtle.drop()
+            turtle.suck()
+            if utils.isFuel(turtle.getItemDetail(i)) then
+                hasTakenFuel = true
+            end
+        end
+    end
+    -- put everything back that are is not needed
+    for i=1,16,1 do
+        local details = turtle.getItemDetail(i)
+        if not needItem(details) and not utils.isFuel(details) then
+            turtle.select(i);turtle.drop()
+        end
+    end
+    return hasTakenFuel
 end
 
 function getFuel()
-    print("Navigation: I do not know how to get fuel")
     if isHome() and turnTowardsChest() and takeFuelFromChest() then
+        print("Navigation: found fuel")
         turnAround()
         return true
     else
         print("Navigation: cannot get fuel")
+        turnAround()
         return false
     end
 end

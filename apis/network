@@ -61,8 +61,9 @@ function closeConnection()
 end
 
 function send(id, message)
-    print("send " .. message)
-    return rednet.send(id, message)
+    if id then
+        return rednet.send(id, message)
+    end
 end
 
 function receive(filter, timeout)
