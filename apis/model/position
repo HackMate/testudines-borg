@@ -8,17 +8,17 @@ Position = {
 Position.__index = Position
 
 Unknown = nil
-North = 0
-South = 1
-East = 2
-West = 3
+North = 1
+West = 2
+South = 3
+East = 4
 
 local facing = {
     [-1] = "Unknown",
-    [0] = "North",
-    [1] = "South",
-    [2] = "East",
-    [3] = "West",
+    [1] = "North",
+    [2] = "West",
+    [3] = "South",
+    [4] = "East",
 }
 
 function Position:new(x, y, z, facing)
@@ -43,13 +43,27 @@ function Position:tostring()
     end
 end
 
+local function isPosition(pos)
+    return getmetatable(pos) == position.Position
+end
+
 function distance(pos1, pos2)
-    local arePositions = getmetatable(pos1) == position.Position and getmetatable(pos2) == position.Position
+    local arePositions = isPosition(pos1) and isPosition(pos2)
     if arePositions and pos1:isValid() and pos2:isValid() then
         local xd, yd, zd = pos1.x - pos2.x, pos1.y - pos2.y, pos1.z - pos2.z
         return math.sqrt(xd*xd + yd*yd + zd*zd)
     else
         return math.huge
+    end
+end
+
+function Position:setOrientation(nextPos)
+    if isPosition(nextPos) and nextPos:isValid() then
+        local xd, _, zd = self.x - nextPos.x, self.y - nextPos.y, self.z - nextPos.z
+        local heading = ((xd + math.abs(xd) * 2) + (zd + math.abs(zd) * 3))
+        if facing[heading] ~= nil then
+            self.facing = heading
+        end
     end
 end
 
