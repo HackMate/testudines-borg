@@ -13,20 +13,12 @@ function shutDownHandler(id, message)
     network.closeConnection()
 end
 
-function positionHandler(id)
-    print("sending position")
-    local x, y, z = gps.locate()
-    if not x then x = -1;y=-1;z=-1 end
-    network.send(id, "pos:" .. x .. "," .. y .. "," .. z)
-end
-
 -- main --
 network.addMessageHandler("ping", pingHandler)
 network.addMessageHandler("shutdown", shutDownHandler)
-network.addMessageHandler("position", positionHandler)
 
 network.init()
-navigation.init()
-miner.init(navigation, network)
+navigation.init(network)
+miner.init(navigation)
 
 parallel.waitForAll(miner.run, network.run)

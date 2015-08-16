@@ -2,9 +2,40 @@ os.loadAPI("/apis/model/position")
 
 assert(position)
 
--- Default constructor --
-local pos = position.Position:new()
-assert(pos.x == -1, "x must be -1")
-assert(pos.y == -1, "y must be -1")
-assert(pos.z == -1, "z must be -1")
-assert(pos.facing == position.Unknown, "facing must be Unknown")
+print("test: Default constructor should return an invalid position")
+local invalidPosition = position.Position:new()
+local validPosition = position.Position:new(0,0,0,position.North)
+assert(invalidPosition:isValid() == false, "default constructor should return an invalid position")
+assert(invalidPosition ~= validPosition, "an invalid position cannot be compared to a valid one")
+
+
+print("test: constructor should build a valid position")
+local pos = position.Position:new(10, 12, 123, position.North)
+assert(pos.x == 10, "x must be 10")
+assert(pos.y == 12, "y must be 12")
+assert(pos.z == 123, "z must be 123")
+assert(pos.facing == position.North, "facing must be North")
+assert(pos:isValid() == true, "expected a valid position")
+
+
+print("test:  position.tostring should convert the position to a readbale string")
+assert(position.Position:new(12, 12, 13, position.North):tostring() == "12, 12, 13, North",
+    "position.tostring returned an invalid string")
+assert(position.Position:new(12, 100, 13, position.Unknown):tostring() == "12, 100, 13, Unknown",
+    "position.tostring returned an invalid string")
+
+
+print("test: positions should be comparable")
+local pos1 = position.Position:new(0, 0, 0, position.North)
+local pos2 = position.Position:new(0, 0, 1, position.North)
+assert(pos1 ~= pos2, "two differing positions should not be equal")
+assert(pos1 == pos1, "a position should be equal to itself")
+local pos3 = position.Position:new(0, 0, 0, position.Unknown)
+assert(pos1 == pos3, "two positions with differing directions should be equal")
+
+
+print("test: position.distance")
+local distance = position.distance
+assert(distance(position.Position:new(0, 0, 0), position.Position:new(0, 0, 0)) == 0, "distance between two equal points should be 0")
+assert(distance(position.Position:new(0, 0, 0), position.Position:new(0, 0, 10)) == 10, "distance between two points must be correct")
+assert(distance(position.Position:new(0, 0, 0), position.Position:new()) == math.huge, "distance between a point and an invalid one must be huge")

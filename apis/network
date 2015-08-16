@@ -1,3 +1,4 @@
+os.loadAPI("/apis/model/position")
 
 local function getModemPostion()
     for _, side in pairs(rs.getSides()) do
@@ -66,6 +67,15 @@ end
 
 function receive(filter, timeout)
     return rednet.receive(filter, timeout)
+end
+
+function getGpsLocation()
+    local x, y, z = gps.locate()
+    if x then
+        return position.Position:new(x, y, z)
+    else
+        return position.Position:new()
+    end
 end
 
 function init()

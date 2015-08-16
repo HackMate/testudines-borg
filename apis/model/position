@@ -1,13 +1,55 @@
-Position = {x = -1, y = -1, z = -1, facing = -1}
+Position = {
+    x = nil, y = nil, z = nil, facing = -1,
+    __eq = function (lhs, rhs)
+        return lhs.x == rhs.x and lhs.y == rhs.y and lhs.z == rhs.z
+    end,
+    __type = function() return "Position" end
+}
+Position.__index = Position
 
-Unknown = -1
+Unknown = nil
 North = 0
 South = 1
 East = 2
 West = 3
 
-function Position:new(baseClass, x, y, z, facing)
-    local self = { x = x, y = y, z = z, facing = facing }
-    setmetatable(self, { __index = Position})
-    return self
+local facing = {
+    [-1] = "Unknown",
+    [0] = "North",
+    [1] = "South",
+    [2] = "East",
+    [3] = "West",
+}
+
+function Position:new(x, y, z, facing)
+    local position = {}
+    setmetatable(position, Position)
+    position.x = x
+    position.y = y
+    position.z = z
+    position.facing = facing
+    return position
 end
+
+function Position:isValid()
+    return self.x ~= nil and self.y ~= nil and self.z ~= nil and self.facing ~= nil
+end
+
+function Position:tostring()
+    if self:isValid() then
+        return self.x .. ", " .. self.y .. ", " .. self.z .. ", " .. facing[self.facing]
+    else
+        return "invalid-position"
+    end
+end
+
+function distance(pos1, pos2)
+    local arePositions = getmetatable(pos1) == position.Position and getmetatable(pos2) == position.Position
+    if arePositions and pos1:isValid() and pos2:isValid() then
+        local xd, yd, zd = pos1.x - pos2.x, pos1.y - pos2.y, pos1.z - pos2.z
+        return math.sqrt(xd*xd + yd*yd + zd*zd)
+    else
+        return math.huge
+    end
+end
+

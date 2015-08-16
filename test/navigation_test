@@ -1,0 +1,23 @@
+os.loadAPI("/apis/navigation")
+os.loadAPI("/apis/network")
+os.loadAPI("/apis/model/position")
+
+-- Make sure the navigation controller provides the necessary implementation. --
+navigation.init(network)
+
+-- navigation.setHome should throw an error on invalid input --
+local success, _ = pcall(navigation.setHome)
+assert(success == false, "setHome without input should throw an error")
+
+-- navigation.setHome should
+-- mock --
+local homePos = position.Position:new(0,12,0, position.North)
+function network.getGpsLocation() return homePos end
+navigation.setHome(homePos)
+assert(navigation.isHome())
+
+navigation.saveState()
+navigation.loadState()
+assert(navigation.isHome(), "loading the state should not effect isHome()")
+assert(navigation.getHomePosition() == homePos, "loading the state should be able to fully deserialize the homePosition")
+assert(navigation.getHomePosition().facing == position.North, "loading the state should be able to fully deserialize the homePosition")
