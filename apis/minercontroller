@@ -58,6 +58,15 @@ function receiveOrder()
     end
 end
 
+function isHome()
+end
+
+function needsFuel()
+end
+
+function getFuel()
+end
+
 function init(navigationController, networkController)
     navigator = navigationController
     network = networkController
@@ -72,6 +81,9 @@ function run()
 
     repeat
         local executeOrder, orderName = receiveOrder()
+        if isHome() and needsFuel() then
+            getFuel()
+        end
         executeOrder()
     until orderName == "shutdown"
 

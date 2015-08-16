@@ -1,0 +1,10 @@
+os.loadAPI("/apis/model/position")
+
+assert(position)
+
+-- Default constructor --
+local pos = position.Position:new()
+assert(pos.x == -1, "x must be -1")
+assert(pos.y == -1, "y must be -1")
+assert(pos.z == -1, "z must be -1")
+assert(pos.facing == position.Unknown, "facing must be Unknown")
