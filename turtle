@@ -1,32 +1,32 @@
-os.loadAPI("apis/rednetcontroller")
-os.loadAPI("apis/minercontroller")
-os.loadAPI("apis/navigationcontroller")
+os.loadAPI("apis/network")
+os.loadAPI("apis/miner")
+os.loadAPI("apis/navigation")
 
 
 function pingHandler(id)
     print("sending pong")
-    rednetcontroller.send(id, "pong")
+    network.send(id, "pong")
 end
 
 function shutDownHandler(id, message)
-    rednetcontroller.send(id, "shutting down")
-    rednetcontroller.closeConnection()
+    network.send(id, "shutting down")
+    network.closeConnection()
 end
 
 function positionHandler(id)
     print("sending position")
     local x, y, z = gps.locate()
     if not x then x = -1;y=-1;z=-1 end
-    rednetcontroller.send(id, "pos:" .. x .. "," .. y .. "," .. z)
+    network.send(id, "pos:" .. x .. "," .. y .. "," .. z)
 end
 
 -- main --
-rednetcontroller.addMessageHandler("ping", pingHandler)
-rednetcontroller.addMessageHandler("shutdown", shutDownHandler)
-rednetcontroller.addMessageHandler("position", positionHandler)
+network.addMessageHandler("ping", pingHandler)
+network.addMessageHandler("shutdown", shutDownHandler)
+network.addMessageHandler("position", positionHandler)
 
-rednetcontroller.init()
-navigationcontroller.init()
-minercontroller.init(navigationcontroller, rednetcontroller)
+network.init()
+navigation.init()
+miner.init(navigation, network)
 
-parallel.waitForAll(minercontroller.run, rednetcontroller.run)
+parallel.waitForAll(miner.run, network.run)
