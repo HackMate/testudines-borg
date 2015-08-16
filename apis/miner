@@ -119,8 +119,9 @@ function makeAmove(move, retries)
         error("Miner: cannot move")
     end
     if not move() then
+        os.sleep(0.2)
         if not retries then
-            retries = 10
+            retries = 20
         end
         turtle.attack()
         makeAmove(move, retries-1)
@@ -140,7 +141,7 @@ function needsFuel()
     state.fuel.level = turtle.getFuelLevel()
     local distanceToHome = navigator.distanceToHome()
     print("Miner: I have ", state.fuel.level, " and have distance to home of ", distanceToHome)
-    return state.fuel.level < distanceToHome * 2 or distanceToHome == 0 and state.fuel.level == 0
+    return state.fuel.level < distanceToHome * 2 or distanceToHome == 0 and state.fuel.level < 100
 end
 
 function hasFuel()
@@ -211,7 +212,9 @@ function run()
         end)
         if not success then
             state.currentOrder = nil
-            network.send(commanderId, "Miner: failed to execute order: " .. message)
+            message = "Miner: failed to execute order: " .. message
+            print(message)
+            network.send(commanderId, message)
         end
     until command == "shutdown"
 
