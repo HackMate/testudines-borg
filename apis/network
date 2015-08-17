@@ -17,33 +17,11 @@ local function try(func)
     end
 end
 
-local messageHandler = {}
-
-function addMessageHandler(message, handler)
-    messageHandler[message] = handler
-end
-
-function removeMessageHandler(message)
-    messageHandler[message] = nil
-end
-
--- returns false in case a message could not be handled --
-local function handleReceivedMessage(id, message)
-    if messageHandler[message] then
-        local handler = messageHandler[message]
-        return handler(id, message)
-    end
-    return true
-end
-
-local connectionEstablished = false
-
 function openConnection()
     try(
         function()
             print("Rednet: connecting")
             rednet.open(getModemPostion())
-            connectionEstablished = true
             print("Rednet: connected")
         end
     )
@@ -54,7 +32,6 @@ function closeConnection()
         function()
             print("Rednet: disconnecting")
             rednet.close(getModemPostion())
-            connectionEstablished = false
             print("Rednet: disconnected")
         end
     )
@@ -81,12 +58,4 @@ end
 
 function init()
     openConnection()
-end
-
-function run()
-    while connectionEstablished do
-        local id, message = rednet.receive()
-        print("Rednet: received message '" .. message .. "' with id: " .. id)
-        handleReceivedMessage(id, message)
-    end
 end
