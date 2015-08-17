@@ -80,6 +80,7 @@ end
 function orders.shutdown(commanderId, _)
     print("Miner: shutdown")
     network.send(commanderId, "Miner: shutting down")
+    network.closeConnection()
 end
 function orders.dance(commanderId)
     if needsFuel() then
@@ -113,18 +114,21 @@ function orders.dance(commanderId)
     makeAmove(turtle.back)
     return false
 end
+function orders.ping(commanderId)
+    print("Miner: sending pong")
+    network.send(commanderId, "pong")
+end
 
 function makeAmove(move, retries)
     if retries and retries < 1 then
         error("Miner: cannot move")
     end
-    if not move() then
+    if move() then
+        return true
+    else -- Try again --
         os.sleep(0.2)
-        if not retries then
-            retries = 20
-        end
         turtle.attack()
-        makeAmove(move, retries-1)
+        return makeAmove(move, retries and retries-1 or 20)
     end
 end
 

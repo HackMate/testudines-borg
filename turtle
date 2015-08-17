@@ -2,24 +2,12 @@ os.loadAPI("apis/network")
 os.loadAPI("apis/miner")
 os.loadAPI("apis/navigation")
 
-
-function pingHandler(id)
-    print("sending pong")
-    network.send(id, "pong")
-end
-
-function shutDownHandler(id, message)
-    network.send(id, "shutting down")
-    network.closeConnection()
-end
-
 -- main --
-network.addMessageHandler("ping", pingHandler)
-network.addMessageHandler("shutdown", shutDownHandler)
 
 network.init()
 navigation.init(network)
 miner.init(navigation)
+
 
 parallel.waitForAll(miner.run, network.run)
 print("rebooting")
