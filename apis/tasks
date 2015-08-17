@@ -1,0 +1,108 @@
+TaskQueue = {}
+
+function TaskQueue:create()
+    local self = {first = 0, last = -1}
+
+    function self:pushleft (value)
+        local first = self.first - 1
+        self.first = first
+        self[first] = value
+    end
+
+    function self:pushright (value)
+        local last = self.last + 1
+        self.last = last
+        self[last] = value
+    end
+
+    function self:popleft ()
+        local first = self.first
+        if first > self.last then error("task queue is empty") end
+        local value = self[first]
+        self[first] = nil        -- to allow garbage collection
+        self.first = first + 1
+        return value
+    end
+
+    function self:popright ()
+        local last = self.last
+        if self.first > last then error("task queue is empty") end
+        local value = self[last]
+        self[last] = nil         -- to allow garbage collection
+        self.last = last - 1
+        return value
+    end
+
+    function self:isempty()
+        print(self.first, self.last)
+        return self.first == self.last + 1
+    end
+
+    return self
+end
+
+SerialTaskRunner = {}
+function SerialTaskRunner:create()
+    local self = {}
+
+    self.taskQueue = TaskQueue:create()
+    self.currentTask = nil
+    self.abortTask = false
+
+    function self:run()
+        local eventData = {}
+        repeat
+
+            if self.currentTask == nil and not self.taskQueue:isempty() then
+                print("setting current task")
+                self.currentTask = self.taskQueue:popright()
+            end
+
+            if self.currentTask ~= nil and self.abortTask == true  then
+                print("SerialTaskRunner: Terminating current task")
+                self.abortTask = false
+                eventData = {"terminate"}
+            end
+
+            if self.currentTask ~= nil and (
+                    self.currentFilter == nil or
+                    self.currentFilter == eventData[1] or
+                    eventData[1] == "terminate") then
+                print(table.unpack(eventData))
+                local ok, param = coroutine.resume(self.currentTask, table.unpack(eventData))
+                if not ok then
+                    print("SerialTaskRunner: task failed ", self.currentTask)
+                else
+                    self.currentFilter = param
+                end
+
+                if coroutine.status(self.currentTask) == "dead" then
+                    print("SerialTaskRunner: task ended ", self.currentTask)
+                    self.currentTask = nil
+                    self.currentFilter = nil
+                end
+
+            end
+            print("SerialTaskRunner: yielding")
+            eventData = {coroutine.yield()}
+            print("SerialTaskRunner: resuming", eventData)
+        until eventData == "terminate"
+
+        print("SerialTaskRunner: Going down")
+    end
+
+    function self:schedule(task)
+        if type(task) ~= "function" then
+            error("Expected function, got" .. type(task), 3)
+        end
+        local routine = coroutine.create(task)
+        print("SerialTaskRunner: Scheduling task", routine)
+        self.taskQueue:pushleft(routine)
+    end
+
+    function self:terminateCurrentTask()
+        self.abortTask = true
+    end
+
+    return self
+end

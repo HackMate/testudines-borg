@@ -1,0 +1,35 @@
+os.loadAPI("/apis/tasks")
+
+local TaskQueue = tasks.TaskQueue
+
+print("test: TaskQueue")
+local task = TaskQueue:create()
+task:pushleft(1)
+assert(task:popright() == 1, "one element should be poped right if pushed left")
+task:pushright(2)
+assert(task:popleft() == 2, "one element should be poped left if pushed right")
+
+task:pushleft(1)
+task:pushleft(2)
+task:pushleft(3)
+task:pushleft(4)
+assert(task:popright() == 1, "should behave fifo like")
+assert(task:popright() == 2, "should behave fifo like")
+assert(task:popright() == 3, "should behave fifo like")
+assert(task:popright() == 4, "should behave fifo like")
+local success, message = pcall(function() task:popright() end)
+assert(success == false, "should throw an error on an empty queue")
+assert(string.match(message, "task queue is empty"), "should throw the right error message on an empty queue")
+
+task:pushright(1)
+task:pushright(2)
+assert(task:popleft() == 1, "should behave fifo like")
+assert(task:popleft() == 2, "should behave fifo like")
+local success, message = pcall(function() task:popleft() end)
+assert(success == false, "should throw an error on an empty queue")
+assert(string.match(message, "task queue is empty"), "should throw the right error message on an empty queue")
+
+assert(task:isempty(), "should be able to determine if empty")
+print("test: TaskQueue success")
+
+print("test: SerialTaskRunner")

@@ -18,7 +18,7 @@ local state = {
        fuel = {level = 0, inSlot = nil}
     }
 
-local orders = {}
+orders = {}
 function orders.refuel(commanderId, message)
     if needsFuel() then
         print("Miner: I need fuel")
@@ -77,9 +77,9 @@ end
 function orders.position(commanderId)
     network.send(commanderId, "Miner: position: " .. navigator.getPosition():tostring())
 end
-function orders.shutdown(commanderId, _)
-    print("Miner: shutdown")
-    network.send(commanderId, "Miner: shutting down")
+function orders.reboot(commanderId, _)
+    print("Miner: reboot")
+    network.send(commanderId, "Miner: rebooting now")
     network.closeConnection()
 end
 function orders.dance(commanderId)
@@ -132,15 +132,6 @@ function makeAmove(move, retries)
     end
 end
 
-function receiveOrder()
-    print("Miner: Awaiting orders")
-    local id, orderName = network.receive(10)
-    if orders[orderName] then
-        print("Miner: Received orders")
-        return orders[orderName], id, orderName
-    end
-end
-
 function needsFuel()
     state.fuel.level = turtle.getFuelLevel()
     local distanceToHome = navigator.distanceToHome()
@@ -186,41 +177,4 @@ function init(navigationController)
     end
 
     navigator = navigationController
-end
-
-function run()
-    print("Miner: started")
-
-    if not navigator.hasHome() then
-        navigator.findHome()
-    end
-
-    repeat
-        local newOrder, commanderId, command = receiveOrder()
-
-        local success, message = pcall(function()
-            if newOrder then
-                state.currentOrder = newOrder
-            end
-            if state.currentOrder then
-                if not newOrder then
-                    print("Miner: Resuming current order")
-                end
-                if state.currentOrder(commanderId, command) == false then
-                    print("Miner: order has not been finished, resuming later")
-                else
-                    print("Miner: order has been finished")
-                    state.currentOrder = nil
-                end
-            end
-        end)
-        if not success then
-            state.currentOrder = nil
-            message = "Miner: failed to execute order: " .. message
-            print(message)
-            network.send(commanderId, message)
-        end
-    until command == "shutdown"
-
-    print("Miner: done")
 end

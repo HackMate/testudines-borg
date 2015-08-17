@@ -1,6 +1,42 @@
 os.loadAPI("apis/network")
 os.loadAPI("apis/miner")
 os.loadAPI("apis/navigation")
+os.loadAPI("/apis/tasks")
+
+WireLessCommandReceiver = {}
+
+function WireLessCommandReceiver:create(network, taskRunner)
+    local self = {}
+    self.network = network
+    self.taskRunner = taskRunner
+
+    local function receiveOrder()
+        print("WireLessCommandReceiver: Awaiting orders")
+        local id, orderName = network.receive(10)
+        if miner.orders[orderName] then
+            print("WireLessCommandReceiver: Received order")
+            return miner.orders[orderName], id, orderName
+        end
+    end
+
+    function self:run()
+        print("WireLessCommandReceiver: started")
+
+        repeat
+            local newOrder, commanderId, command = receiveOrder()
+
+            if newOrder then
+                self.taskRunner:terminateCurrentTask()
+                self.taskRunner:schedule(function() newOrder(commanderId, command) end)
+            end
+
+        until command == "reboot"
+
+        print("WireLessCommandReceiver: going down")
+    end
+
+    return self
+end
 
 local function create(first, ...)
     if first ~= nil then
@@ -19,12 +55,20 @@ local function runtUntilLimit( _routines)
     local tFilters = {}
     local eventData = {}
     while true do
+
         for n=1,count do
             local r = _routines[n]
             if r then
                 if tFilters[r] == nil or tFilters[r] == eventData[1] or eventData[1] == "terminate" then
+
+                    local reboot = eventData[1] == "rednet_message" and eventData[3] == "reboot"
+                    if reboot then
+                        network.send(eventData[2], "Forcing shutdown")
+                        eventData = {"terminate" }
+                    end
+
                     local ok, param = coroutine.resume(r, table.unpack(eventData))
-                    if not ok then
+                    if not ok and not reboot then
                         error(param, 0)
                     else
                         tFilters[r] = param
@@ -40,7 +84,7 @@ local function runtUntilLimit( _routines)
             end
         end
 
-        eventData = {os.pullEventRaw() }
+        eventData = {os.pullEventRaw()}
     end
 end
 
@@ -55,8 +99,10 @@ network.init()
 navigation.init(network)
 miner.init(navigation)
 
+taskRunner = tasks.SerialTaskRunner:create()
+commandReceiver = WireLessCommandReceiver:create(network, taskRunner)
 
-waitForAll(miner.run)
+waitForAll(function() commandReceiver:run() end, function() taskRunner:run() end)
 
 print("rebooting")
 os.reboot()
