@@ -40,17 +40,6 @@ local function runtUntilLimit( _routines)
             end
         end
 
-        for n=1, count do
-            local r = _routines[n]
-            if r and coroutine.status(r) == "dead" then
-                _routines[n] = nil
-                living = living - 1
-                if living <= 0 then
-                    return n
-                end
-            end
-        end
-
         eventData = {os.pullEventRaw() }
     end
 end
