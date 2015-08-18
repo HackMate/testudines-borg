@@ -55,17 +55,16 @@ local function runtUntilLimit( _routines)
     local tFilters = {}
     local eventData = {}
     while true do
+        local reboot = eventData[1] == "rednet_message" and eventData[3] == "reboot"
+        if reboot then
+            network.send(eventData[2], "Forcing shutdown")
+            eventData = {"terminate"}
+        end
 
         for n=1,count do
             local r = _routines[n]
             if r then
                 if tFilters[r] == nil or tFilters[r] == eventData[1] or eventData[1] == "terminate" then
-
-                    local reboot = eventData[1] == "rednet_message" and eventData[3] == "reboot"
-                    if reboot then
-                        network.send(eventData[2], "Forcing shutdown")
-                        eventData = {"terminate" }
-                    end
 
                     local ok, param = coroutine.resume(r, table.unpack(eventData))
                     if not ok and not reboot then

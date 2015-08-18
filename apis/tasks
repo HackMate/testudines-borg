@@ -68,7 +68,6 @@ function SerialTaskRunner:create()
                     self.currentFilter == nil or
                     self.currentFilter == eventData[1] or
                     eventData[1] == "terminate") then
-                print(table.unpack(eventData))
                 local ok, param = coroutine.resume(self.currentTask, table.unpack(eventData))
                 if not ok then
                     print("SerialTaskRunner: task failed ", self.currentTask)
@@ -85,8 +84,8 @@ function SerialTaskRunner:create()
             end
             print("SerialTaskRunner: yielding")
             eventData = {coroutine.yield()}
-            print("SerialTaskRunner: resuming", eventData)
-        until eventData == "terminate"
+            print("SerialTaskRunner: resuming", table.unpack(eventData))
+        until eventData[1] == "reboot" or eventData[1] == "terminate"
 
         print("SerialTaskRunner: Going down")
     end
