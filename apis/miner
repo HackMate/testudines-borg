@@ -1,4 +1,7 @@
 os.loadAPI("/apis/utils")
+os.loadAPI("/apis/cclog")
+
+local logger = cclog.Logger:create("Miner")
 
 -- Navigator interface --
 navigator = {}
@@ -21,15 +24,15 @@ local state = {
 orders = {}
 function orders.refuel(commanderId, message)
     if needsFuel() then
-        print("Miner: I need fuel")
+        print("I need fuel")
         if hasFuel() then
-            print("Miner: I have fuel")
+            logger.info("I have fuel")
             if useFuel() then
-                network.send(commanderId, "Miner: I used my fuel")
+                network.send(commanderId, "I used my fuel")
             end
         end
         if needsFuel() then
-            network.send(commanderId, "Miner: I don't have fuel, going home.")
+            network.send(commanderId, "I don't have fuel, going home.")
             navigator.goHome()
             if navigator.getFuel() and hasFuel() then
                 useFuel()
@@ -39,57 +42,57 @@ function orders.refuel(commanderId, message)
             end
         end
     else
-        local message = "Miner: I do not need to refuel fuelLevel: " .. turtle.getFuelLevel() ..
+        local message = "I do not need to refuel fuelLevel: " .. turtle.getFuelLevel() ..
                 " distanceToHome: " .. navigator.distanceToHome()
         print(message)
         network.send(commanderId, message)
     end
 end
 function orders.fuelLevel(commanderId)
-    network.send(commanderId, "Miner: fuelLevel: " .. turtle.getFuelLevel())
+    network.send(commanderId, "fuelLevel: " .. turtle.getFuelLevel())
 end
 function orders.distanceToHome(commanderId)
-    network.send(commanderId, "Miner: distanceToHome: " .. navigator.distanceToHome())
+    network.send(commanderId, "distanceToHome: " .. navigator.distanceToHome())
 end
 function orders.clearHome(commanderId)
     local success, message = navigator.clearHome()
     if success then
-        network.send(commanderId, "Miner: cleared home")
+        network.send(commanderId, "cleared home")
     else
-        network.send(commanderId, "Miner: could not clear home" .. message)
+        network.send(commanderId, "could not clear home" .. message)
     end
 end
 function orders.hasHome(commanderId)
     if navigator.hasHome() then
-        network.send(commanderId, "Miner: has a home at " .. navigator.getHomePosition():tostring())
+        network.send(commanderId, "has a home at " .. navigator.getHomePosition():tostring())
     else
-        network.send(commanderId, "Miner: has no home")
+        network.send(commanderId, "has no home")
     end
 end
 function orders.findHome(commanderId)
-    network.send(commanderId, "Miner: will find a new home")
+    network.send(commanderId, "will find a new home")
     navigator.findHome()
-    network.send(commanderId, "Miner: has a home at " .. navigator.getHomePosition():tostring())
+    network.send(commanderId, "has a home at " .. navigator.getHomePosition():tostring())
 end
 function orders.homePosition(commanderId)
-    network.send(commanderId, "Miner: homePosition: " .. navigator.getHomePosition():tostring())
+    network.send(commanderId, "homePosition: " .. navigator.getHomePosition():tostring())
 end
 function orders.position(commanderId)
-    network.send(commanderId, "Miner: position: " .. navigator.getPosition():tostring())
+    network.send(commanderId, "position: " .. navigator.getPosition():tostring())
 end
 function orders.reboot(commanderId, _)
-    print("Miner: reboot")
-    network.send(commanderId, "Miner: rebooting now")
+    logger.info("reboot")
+    network.send(commanderId, "rebooting now")
     network.closeConnection()
 end
 function orders.dance(commanderId)
     if needsFuel() then
-        print("Miner: need-fuel, cannot dance without some juice")
-        network.send(commanderId, "Miner: need-fuel, cannot dance without some juice")
+        logger.info("need-fuel, cannot dance without some juice")
+        network.send(commanderId, "need-fuel, cannot dance without some juice")
         return true
     end
-    print("Miner: let's dance")
-    network.send(commanderId, "Miner: will dance")
+    logger.info("let's dance")
+    network.send(commanderId, "will dance")
     turtle.forward()
     turtle.forward()
     for i=1,2,1 do
@@ -115,13 +118,13 @@ function orders.dance(commanderId)
     return false
 end
 function orders.ping(commanderId)
-    print("Miner: sending pong")
+    logger.info("sending pong")
     network.send(commanderId, "pong")
 end
 
 function makeAmove(move, retries)
     if retries and retries < 1 then
-        error("Miner: cannot move")
+        error("cannot move")
     end
     if move() then
         return true
@@ -135,7 +138,7 @@ end
 function needsFuel()
     state.fuel.level = turtle.getFuelLevel()
     local distanceToHome = navigator.distanceToHome()
-    print("Miner: I have ", state.fuel.level, " and have distance to home of ", distanceToHome)
+    logger.info("I have ", state.fuel.level, " and have distance to home of ", distanceToHome)
     return state.fuel.level < distanceToHome * 2 or distanceToHome == 0 and state.fuel.level < 100
 end
 
@@ -147,7 +150,7 @@ function hasFuel()
         if success then
             local details = turtle.getItemDetail()
             if utils.isFuel(details) then
-                print("Miner: I have fuel " .. details.name)
+                logger.info("I have fuel " .. details.name)
                 state.fuel.inSlot = slot
                 return true, details.name
             end

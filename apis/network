@@ -1,4 +1,7 @@
 os.loadAPI("/apis/model/position")
+os.loadAPI("/apis/cclog")
+
+local logger = cclog.Logger:create("Network")
 
 local function getModemPostion()
     for _, side in pairs(rs.getSides()) do
@@ -6,23 +9,23 @@ local function getModemPostion()
             return side
         end
     end
-    error("Rednet: Turtle does not seem to have a modem.")
+    error("Turtle does not seem to have a modem.")
 end
 
 -- Helper that wrapps error messages --
 local function try(func)
     local success, message = pcall(func)
     if not success then
-        error("Rednet: " .. message)
+        error("Network error: " .. message)
     end
 end
 
 function openConnection()
     try(
         function()
-            print("Rednet: connecting")
+            logger:info("connecting")
             rednet.open(getModemPostion())
-            print("Rednet: connected")
+            logger:info("connected")
         end
     )
 end
@@ -30,9 +33,9 @@ end
 function closeConnection()
     try(
         function()
-            print("Rednet: disconnecting")
+            logger:info("disconnecting")
             rednet.close(getModemPostion())
-            print("Rednet: disconnected")
+            logger:info("disconnected")
         end
     )
 end

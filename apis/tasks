@@ -1,3 +1,7 @@
+os.loadAPI("/apis/cclog")
+
+local logger = cclog.Logger:create("SerialTaskRunner")
+
 TaskQueue = {}
 
 function TaskQueue:create()
@@ -34,7 +38,6 @@ function TaskQueue:create()
     end
 
     function self:isempty()
-        print(self.first, self.last)
         return self.first == self.last + 1
     end
 
@@ -54,12 +57,12 @@ function SerialTaskRunner:create()
         repeat
 
             if self.currentTask == nil and not self.taskQueue:isempty() then
-                print("setting current task")
+                logger:info("setting current task")
                 self.currentTask = self.taskQueue:popright()
             end
 
             if self.currentTask ~= nil and self.abortTask == true  then
-                print("SerialTaskRunner: Terminating current task")
+                logger:info("Terminating current task")
                 self.abortTask = false
                 eventData = {"terminate"}
             end
@@ -68,26 +71,27 @@ function SerialTaskRunner:create()
                     self.currentFilter == nil or
                     self.currentFilter == eventData[1] or
                     eventData[1] == "terminate") then
+                logger:info("Resuming task")
                 local ok, param = coroutine.resume(self.currentTask, table.unpack(eventData))
                 if not ok then
-                    print("SerialTaskRunner: task failed ", self.currentTask)
+                    logger:info("task failed ", self.currentTask)
                 else
                     self.currentFilter = param
                 end
 
                 if coroutine.status(self.currentTask) == "dead" then
-                    print("SerialTaskRunner: task ended ", self.currentTask)
+                    logger:info("task ended ", self.currentTask)
                     self.currentTask = nil
                     self.currentFilter = nil
                 end
 
             end
-            print("SerialTaskRunner: yielding")
+            logger:debug("yielding")
             eventData = {coroutine.yield()}
-            print("SerialTaskRunner: resuming", table.unpack(eventData))
+            logger:debug("resuming", table.unpack(eventData))
         until eventData[1] == "reboot" or eventData[1] == "terminate"
 
-        print("SerialTaskRunner: Going down")
+        logger:info("Going down")
     end
 
     function self:schedule(task)
@@ -95,7 +99,7 @@ function SerialTaskRunner:create()
             error("Expected function, got" .. type(task), 3)
         end
         local routine = coroutine.create(task)
-        print("SerialTaskRunner: Scheduling task", routine)
+        logger:info("Scheduling task", routine)
         self.taskQueue:pushleft(routine)
     end
 
