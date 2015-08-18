@@ -1,0 +1,58 @@
+Logger = {}
+
+Level = {}
+Level.DEBUG = 1
+Level.INFO = 2
+Level.WARN = 3
+Level.ERROR = 4
+Level.FATAL = 5
+LevelToString = {
+    [1] = "DEBUG",
+    [2] = "INFO",
+    [3] = "WARN",
+    [4] = "ERROR",
+    [5] = "FATAL"
+}
+
+DefaultLogger = {}
+function DefaultLogger:create()
+    local self = {}
+
+    function self:write(level, message, ...)
+        print(LevelToString[level] .. ": " .. message, table.unpack({ ... }))
+    end
+
+    return self
+end
+
+function Logger:create(name)
+    local self = { level = Level.INFO, name = name }
+
+    if level then
+        self.level = level
+    end
+
+    local _writer = DefaultLogger:create()
+
+    function self:log(level, message, ...)
+        if level >= self.level and _writer then
+            _writer:write(level, self.name and self.name .. ": " .. message or message, ...)
+        end
+    end
+
+    function self:debug(...) self:log(Level.DEBUG, ...) end
+
+    function self:info(...) self:log(Level.INFO, ...) end
+
+    function self:warn(...) self:log(Level.WARN, ...) end
+
+    function self:error(...) self:log(Level.ERROR, ...) end
+
+    function self:fatal(...) self:log(Level.FATAL, ...) end
+
+    function self:setWriter(writer)
+        _writer = writer
+    end
+
+    return self
+end

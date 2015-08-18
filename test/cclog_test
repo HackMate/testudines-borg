@@ -1,0 +1,46 @@
+os.loadAPI("/apis/cclog")
+
+local Logger = cclog.Logger
+local Level = cclog.Level
+
+local mockLogger = {}
+function mockLogger:write(level, message, ...)
+    self.level = level
+    self.message = message
+    self.args = {... }
+end
+
+print("test: cclog.Logger:create(Level.INFO)")
+local testLogger = Logger:create()
+testLogger:setWriter(mockLogger)
+testLogger.level = Level.WARN
+testLogger:log(Level.WARN, "infomessage")
+assert(mockLogger.level == Level.WARN, "Logger.log(Level.INFO, ..) should be passed to the writer")
+assert(mockLogger.message == "infomessage", "Logger.log(Level.INFO, ..) should be passed to the writer")
+
+mockLogger.level = nil; mockLogger.message = nil
+testLogger:log(Level.DEBUG, "debugmessage")
+assert(mockLogger.level == nil, "Logger.log(Level.DEBUG, ..) message should not be passed to the writer")
+assert(mockLogger.message == nil, "Logger.log(Level.DEBUG, ..) message should not be passed to the writer")
+
+print("test: Logger.prefix for messages")
+mockLogger.level = nil; mockLogger.message = nil
+testLogger.level = Level.INFO
+testLogger.name = "prefix"
+testLogger:info("testmessage")
+assert(mockLogger.message == "prefix: testmessage", "logger should add the configured prefix to the message")
+
+print("test: LevelToString")
+assert(cclog.LevelToString[1] == "DEBUG")
+assert(cclog.LevelToString[2] == "INFO")
+assert(cclog.LevelToString[3] == "WARN")
+assert(cclog.LevelToString[4] == "ERROR")
+assert(cclog.LevelToString[5] == "FATAL")
+
+print("test: DefaultLogger - this is only a usage call")
+local testLogger2 = Logger:create()
+testLogger2:info("logging info test")
+testLogger2:debug("logging debug test")
+testLogger2:warn("logging warn")
+testLogger2:error("logging error test")
+testLogger2:fatal("logging fatal test")
