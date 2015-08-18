@@ -1,0 +1,48 @@
+function getFiles()
+    local placesToCheck = { "test" }
+    local testFiles = {}
+
+    while #placesToCheck > 0 do
+
+        local current = placesToCheck[#placesToCheck]
+        placesToCheck[#placesToCheck] = nil
+
+        if not fs.isDir(current) then
+            testFiles[#testFiles + 1] = current
+        else
+            for _, file in pairs(fs.find("/" .. current .. "/*")) do
+                if fs.isDir(file) then
+                    placesToCheck[#placesToCheck + 1] = file
+                else
+                    testFiles[#testFiles + 1] = file
+                end
+            end
+        end
+    end
+
+    return testFiles
+end
+
+
+local startTime = os.clock()
+
+local testFiles = getFiles()
+local success = true
+for _, file in pairs(testFiles) do
+
+    local ok, message = pcall(shell.run, file)
+    if not ok then
+        success = false
+        print("Test: " .. file .. " failed: " .. message)
+        break
+    end
+end
+
+local endTime = os.clock()
+local difference = endTime - startTime
+if success then
+    print("Tests: succeded in ".. difference)
+end
+
+
+
