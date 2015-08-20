@@ -1,18 +1,26 @@
+os.loadAPI("/apis/ccspec")
 os.loadAPI("/apis/utils")
 
-local itemDetail = {}
+describe "utils.IsFuel" {
+    ["input of nil should be false"] = function()
+        expect(utils.isFuel(nil)).should_be(false)
+    end,
 
-print("test: utils.isFuel()")
-assert(utils.isFuel(nil) == false, "input of nil should be false")
-assert(utils.isFuel(itemDetail) == false, "an empty table should be false")
+    ["an empty table should be false"] = function()
+        expect(utils.isFuel({})).should_be(false)
+    end,
 
-itemDetail.name = "minecraft:coal"
-assert(utils.isFuel(itemDetail), "mincraft:coal is a valid fuel")
+    ["mincraft:coal should be a valid fuel"] = function()
+        expect(utils.isFuel({name = "minecraft:coal"})).should_be(true)
+    end,
 
-itemDetail.name = "minecraft:coal_block"
-assert(utils.isFuel(itemDetail), "minecraft:coal_block is a valid fuel")
+    ["mincraft:coal_block should be a valid fuel"] = function()
+        expect(utils.isFuel({name = "minecraft:coal_block"})).should_be(true)
+    end,
 
-itemDetail.name = "minecraft:lava_bucket"
-assert(utils.isFuel(itemDetail), "minecraft:lava_bucket is a valid fuel")
+    ["mincraft:lava_bucket should be a valid fuel"] = function()
+        expect(utils.isFuel({name = "minecraft:lava_bucket"})).should_be(true)
+    end
+}
 
-print("test: successful")
+spec.report(true)

@@ -95,7 +95,16 @@ _G.matchers = {
 			return false, value .. "doesn't match pattern "..pattern
 		end
 		return true
-	end;  
+	end;
+
+
+	should_fail_with_message = function(fn, expectedMessage)
+		local success, message = pcall(fn)
+		if success or not string.match(message, expectedMessage) then
+			return false, "should fail with message '" .. expectedMessage .. "'"
+		end
+		return true
+	end;
 }
  
 matchers.should_equal = matchers.should_be

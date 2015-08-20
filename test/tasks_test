@@ -1,35 +1,62 @@
 os.loadAPI("/apis/tasks")
+os.loadAPI("/apis/ccspec")
 
 local TaskQueue = tasks.TaskQueue
 
-print("test: TaskQueue")
-local task = TaskQueue:create()
-task:pushleft(1)
-assert(task:popright() == 1, "one element should be poped right if pushed left")
-task:pushright(2)
-assert(task:popleft() == 2, "one element should be poped left if pushed right")
 
-task:pushleft(1)
-task:pushleft(2)
-task:pushleft(3)
-task:pushleft(4)
-assert(task:popright() == 1, "should behave fifo like")
-assert(task:popright() == 2, "should behave fifo like")
-assert(task:popright() == 3, "should behave fifo like")
-assert(task:popright() == 4, "should behave fifo like")
-local success, message = pcall(function() task:popright() end)
-assert(success == false, "should throw an error on an empty queue")
-assert(string.match(message, "task queue is empty"), "should throw the right error message on an empty queue")
+describe "TaskQueue" {
+    before = function()
+        taskQueue = TaskQueue:create()
+    end,
 
-task:pushright(1)
-task:pushright(2)
-assert(task:popleft() == 1, "should behave fifo like")
-assert(task:popleft() == 2, "should behave fifo like")
-local success, message = pcall(function() task:popleft() end)
-assert(success == false, "should throw an error on an empty queue")
-assert(string.match(message, "task queue is empty"), "should throw the right error message on an empty queue")
+    ["TaskQueue:isempty() should be able to determine an empty queue"] = function()
+        expect(taskQueue:isempty()).should_be(true)
+    end,
 
-assert(task:isempty(), "should be able to determine if empty")
-print("test: TaskQueue success")
+    ["one element should be poped right if pushed left"] = function()
+        taskQueue:pushleft(1)
+        expect(taskQueue:popright()).should_be(1)
+    end,
 
-print("test: SerialTaskRunner")
+    ["one element should be poped left if pushed right"] = function()
+        taskQueue:pushright(2)
+        expect(taskQueue:popleft()).should_be(2)
+    end,
+
+    ["TaskQueue:popright() should behave fifo like"] = function()
+        taskQueue:pushleft(1)
+        taskQueue:pushleft(2)
+        taskQueue:pushleft(3)
+        taskQueue:pushleft(4)
+
+        expect(taskQueue:popright()).should_be(1)
+        expect(taskQueue:popright()).should_be(2)
+        expect(taskQueue:popright()).should_be(3)
+        expect(taskQueue:popright()).should_be(4)
+    end,
+
+
+    ["TaskQueue:popleft() should behave fifo like"] = function()
+        taskQueue:pushright(1)
+        taskQueue:pushright(2)
+        taskQueue:pushright(3)
+        taskQueue:pushright(4)
+
+        expect(taskQueue:popleft()).should_be(1)
+        expect(taskQueue:popleft()).should_be(2)
+        expect(taskQueue:popleft()).should_be(3)
+        expect(taskQueue:popleft()).should_be(4)
+    end,
+
+    ["TaskQueue:popright() should throw an error on an empty queue"] = function()
+        expect(function() taskQueue:popright() end).should_fail_with_message("task queue is empty")
+    end,
+
+    ["TaskQueue:popleft() should throw an error on an empty queue"] = function()
+        expect(function() taskQueue:popleft() end).should_fail_with_message("task queue is empty")
+    end
+
+}
+
+
+spec.report(true)

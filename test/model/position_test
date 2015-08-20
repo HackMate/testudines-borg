@@ -1,52 +1,104 @@
 os.loadAPI("/apis/model/position")
+os.loadAPI("/apis/ccspec")
 
-assert(position)
+local Position = position.Position
+local North = position.North
 
-print("test: Default constructor should return an invalid position")
-local invalidPosition = position.Position:new()
-local validPosition = position.Position:new(0,0,0,position.North)
-assert(invalidPosition:isValid() == false, "default constructor should return an invalid position")
-assert(invalidPosition ~= validPosition, "an invalid position cannot be compared to a valid one")
+describe "Position" {
+
+    ["new() should return an invalid position"] = function()
+        expect(Position:new():isValid()).should_not_be(true)
+    end,
+
+    ["new(10, 12, 123, North) should build a valid position"] = function()
+        local position = Position:new(10, 12, 123, North)
+        expect(position:isValid()).should_be(true)
+        expect(position.x).should_be(10)
+        expect(position.y).should_be(12)
+        expect(position.z).should_be(123)
+        expect(position.facing).should_be(North)
+    end,
+
+    ["new() should not be comparable to a valid Position"] = function()
+        expect(Position:new() == Position:new(0,0,0, North)).should_not_be(true)
+    end,
+
+    ["position:tostring() should convert the position to a readable string"] = function()
+        expect(Position:new(12, 12, 13, North):tostring()).should_be("12, 12, 13, North")
+    end,
+
+    ["position:tostring() should include an unknown facing"] = function()
+        expect(Position:new(12, 100, 13):tostring()).should_be("12, 100, 13, Unknown")
+    end,
+}
+
+describe "Position == Position" {
+
+    before = function ()
+        pos1 = Position:new(0, 0, 0, position.North)
+        pos2 = Position:new(0, 0, 1, position.North)
+        pos3 = position.Position:new(0, 0, 0, position.Unknown)
+    end,
+
+    ["should not be eual for two differing positions"] = function()
+        expect(pos1 == pos2).should_be(false)
+    end,
 
 
-print("test: constructor should build a valid position")
-local pos = position.Position:new(10, 12, 123, position.North)
-assert(pos.x == 10, "x must be 10")
-assert(pos.y == 12, "y must be 12")
-assert(pos.z == 123, "z must be 123")
-assert(pos.facing == position.North, "facing must be North")
-assert(pos:isValid() == true, "expected a valid position")
+    ["should be equal for the same position"] = function()
+        expect(pos1 == pos1).should_be(true)
+    end,
 
 
-print("test:  position.tostring should convert the position to a readbale string")
-assert(position.Position:new(12, 12, 13, position.North):tostring() == "12, 12, 13, North",
-    "position.tostring returned an invalid string")
-assert(position.Position:new(12, 100, 13, position.Unknown):tostring() == "12, 100, 13, Unknown",
-    "position.tostring returned an invalid string")
+    ["should be equal for two position with differing directions"] = function()
+        expect(pos1 == pos3).should_be(true)
+    end,
+}
 
-
-print("test: positions should be comparable")
-local pos1 = position.Position:new(0, 0, 0, position.North)
-local pos2 = position.Position:new(0, 0, 1, position.North)
-assert(pos1 ~= pos2, "two differing positions should not be equal")
-assert(pos1 == pos1, "a position should be equal to itself")
-local pos3 = position.Position:new(0, 0, 0, position.Unknown)
-assert(pos1 == pos3, "two positions with differing directions should be equal")
-
-
-print("test: position.distance")
 local distance = position.distance
-assert(distance(position.Position:new(0, 0, 0), position.Position:new(0, 0, 0)) == 0, "distance between two equal points should be 0")
-assert(distance(position.Position:new(0, 0, 0), position.Position:new(0, 0, 10)) == 10, "distance between two points must be correct")
-assert(distance(position.Position:new(0, 0, 0), position.Position:new()) == math.huge, "distance between a point and an invalid one must be huge")
+describe "Positon.distance()" {
 
-print("test: position:setOrientation")
-local pos1 = position.Position:new(0, 0, 0, position.North)
-pos1:setOrientation(position.Position:new(0, 0, 1))
-assert(pos1.facing == position.West, "should face west")
-pos1:setOrientation(position.Position:new(0, 0, -1))
-assert(pos1.facing == position.East, "should face east")
-pos1:setOrientation(position.Position:new(1, 0, 0))
-assert(pos1.facing == position.North, "should face north")
-pos1:setOrientation(position.Position:new(-1, 0, 0))
-assert(pos1.facing == position.South, "should face south")
+    ["should be 0 between two equal points"] = function()
+        expect(distance(Position:new(0, 0, 0), Position:new(0, 0, 0))).should_be(0)
+    end,
+
+    ["should be correct between two points"] = function()
+        expect(distance(Position:new(0, 0, 0), Position:new(0, 0, 10))).should_be(10)
+
+    end,
+
+    ["should be huge between an invalid and invalid position"] = function()
+        expect(distance(Position:new(0, 0, 0), position.Position:new())).should_be(math.huge)
+    end,
+
+}
+
+local West = position.West
+local East = position.East
+local North = position.North
+local South = position.South
+describe "Position:setOrientation(pos)" {
+
+    before = function()
+        pos = Position:new(0, 0, 0)
+    end,
+
+    ["should detect West movement"] = function()
+        expect(pos:setOrientation(Position:new(0, 0, 1)).facing).should_be(West)
+    end,
+
+    ["should detect East movement"] = function()
+        expect(pos:setOrientation(Position:new(0, 0, -1)).facing).should_be(East)
+    end,
+
+    ["should detect North movement"] = function()
+        expect(pos:setOrientation(Position:new(1, 0, 0)).facing).should_be(North)
+    end,
+
+    ["should detect South movement"] = function()
+        expect(pos:setOrientation(Position:new(-1, 0, 0)).facing).should_be(South)
+    end,
+
+}
+
+spec.report(true)

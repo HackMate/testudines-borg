@@ -65,5 +65,6 @@ function Position:setOrientation(nextPos)
             self.facing = heading
         end
     end
+    return self
 end
 
