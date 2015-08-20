@@ -1,46 +1,106 @@
 os.loadAPI("/apis/cclog")
+os.loadAPI("/apis/ccspec")
 
 local Logger = cclog.Logger
 local Level = cclog.Level
 
-local mockLogger = {}
-function mockLogger:write(level, message, ...)
-    self.level = level
-    self.message = message
-    self.args = {... }
-end
+describe "For a Logger:create('component-name', Level.WARN)" {
 
-print("test: cclog.Logger:create(Level.INFO)")
-local testLogger = Logger:create()
-testLogger:setWriter(mockLogger)
-testLogger.level = Level.WARN
-testLogger:log(Level.WARN, "infomessage")
-assert(mockLogger.level == Level.WARN, "Logger.log(Level.INFO, ..) should be passed to the writer")
-assert(mockLogger.message == "infomessage", "Logger.log(Level.INFO, ..) should be passed to the writer")
+    before = function()
+        mockLogger = {}
+        function mockLogger:write(level, message, ...)
+            self.level = level
+            self.message = message
+        end
 
-mockLogger.level = nil; mockLogger.message = nil
-testLogger:log(Level.DEBUG, "debugmessage")
-assert(mockLogger.level == nil, "Logger.log(Level.DEBUG, ..) message should not be passed to the writer")
-assert(mockLogger.message == nil, "Logger.log(Level.DEBUG, ..) message should not be passed to the writer")
+        logger = Logger:create()
+        logger:setWriter(mockLogger)
+        logger.level = Level.WARN
+    end,
 
-print("test: Logger.prefix for messages")
-mockLogger.level = nil; mockLogger.message = nil
-testLogger.level = Level.INFO
-testLogger.name = "prefix"
-testLogger:info("testmessage")
-assert(mockLogger.message == "prefix: testmessage", "logger should add the configured prefix to the message")
+    ["Level.INFO messages should be passed to the writer"] = function()
+        logger:log(Level.WARN, "infomessage")
+        expect(mockLogger.level).should_be(Level.WARN)
+        expect(mockLogger.message).should_be("infomessage")
+    end,
 
-print("test: LevelToString")
-assert(cclog.LevelToString[1] == "DEBUG")
-assert(cclog.LevelToString[2] == "INFO")
-assert(cclog.LevelToString[3] == "WARN")
-assert(cclog.LevelToString[4] == "ERROR")
-assert(cclog.LevelToString[5] == "FATAL")
+    ["Level.DEBUG messages should not be passed to the writer"] = function()
+        logger:log(Level.DEBUG, "debugmessage")
+        expect(mockLogger.level).should_be(nil)
+        expect(mockLogger.message).should_be(nil)
+    end,
 
-print("test: DefaultLogger - this is only a usage call")
-local testLogger2 = Logger:create()
-testLogger2:info("logging info test")
-testLogger2:debug("logging debug test")
-testLogger2:warn("logging warn")
-testLogger2:error("logging error test")
-testLogger2:fatal("logging fatal test")
+    ["with logger.name='name' should add the name to the log message"] = function()
+        logger.level = Level.INFO
+        logger.name = "name"
+        logger:info("testmessage")
+        expect(mockLogger.level).should_be(Level.INFO)
+        expect(mockLogger.message).should_be("name: testmessage")
+    end
+}
+
+local LevelToString = cclog.LevelToString
+describe "LevelToString" {
+    ["should map DEBUG"] = function()
+        expect(LevelToString[1]).should_be("DEBUG")
+    end,
+    ["should map INFO"] = function()
+        expect(LevelToString[2]).should_be("INFO")
+    end,
+    ["should map WARN"] = function()
+        expect(LevelToString[3]).should_be("WARN")
+    end,
+    ["should map ERROR"] = function()
+        expect(LevelToString[4]).should_be("ERROR")
+    end,
+    ["should map FATAL"] = function()
+        expect(LevelToString[5]).should_be("FATAL")
+    end,
+}
+
+describe "Logger" {
+    before = function()
+        mockLogger = {}
+        function mockLogger:write(level, message, ...)
+            self.level = level
+            self.message = message
+        end
+
+        logger = Logger:create()
+        logger:setWriter(mockLogger)
+        logger.level = Level.DEBUG
+    end,
+
+    [":info() should return an info message"] = function()
+        logger:info("infomessage")
+        expect(mockLogger.level).should_be(Level.INFO)
+        expect(mockLogger.message).should_be("infomessage")
+    end,
+
+    [":debug() should return an debug message"] = function()
+        logger:debug("debugmessage")
+        expect(mockLogger.level).should_be(Level.DEBUG)
+        expect(mockLogger.message).should_be("debugmessage")
+    end,
+
+    [":warn() should return an warn message"] = function()
+        logger:warn("warnmessage")
+        expect(mockLogger.level).should_be(Level.WARN)
+        expect(mockLogger.message).should_be("warnmessage")
+    end,
+
+    [":error() should return an error message"] = function()
+        logger:error("errormessage")
+        expect(mockLogger.level).should_be(Level.ERROR)
+        expect(mockLogger.message).should_be("errormessage")
+    end,
+
+    [":fatal() should return an fatal message"] = function()
+        logger:fatal("fatalmessage")
+        expect(mockLogger.level).should_be(Level.FATAL)
+        expect(mockLogger.message).should_be("fatalmessage")
+    end,
+
+}
+
+spec.report(true)

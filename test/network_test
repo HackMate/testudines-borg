@@ -1,22 +1,19 @@
 os.loadAPI("/apis/network")
+os.loadAPI("/apis/ccspec")
 os.loadAPI("/apis/model/position")
 
--- Mock --
-mockPosition = {}
-mockPosition.x = -1
-mockPosition.y = -1
-mockPosition.z = -1
-function gps.locate()
-    return mockPosition.x, mockPosition.y, mockPosition.z
-end
+describe "network.getGpsLocation" {
 
-print("test: network.getGpsLocation should return a position.Position")
-mockPosition.x = 10
-mockPosition.y = 12
-mockPosition.z = 13
+    ["should return a valid Position"] = function()
+        function gps.locate() return 10, 12, 13 end
+        expect(network.getGpsLocation()).should_be(position.Position:new(10, 12, 13))
+    end,
 
-assert(network.getGpsLocation() == position.Position:new(10, 12, 13), "network.getGpsLocation did not return the expected value")
+    ["should return an invalid Position in case the gps fails"] = function()
+        function gps.locate() return nil end
+        expect(network.getGpsLocation():isValid()).should_be(false)
+    end
 
-print("test: network.getGpsLocation should return an invalid position.Position in case the gps failed")
-function gps.locate() return nil end
-assert(network.getGpsLocation():isValid() == false, "expected an invalid position")
+}
+
+spec.report(true)
