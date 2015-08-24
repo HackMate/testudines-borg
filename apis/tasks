@@ -74,7 +74,7 @@ function SerialTaskRunner:create()
                 logger:info("Resuming task")
                 local ok, param = coroutine.resume(self.currentTask, table.unpack(eventData))
                 if not ok then
-                    logger:info("task failed ", self.currentTask)
+                    logger:info("task failed ", self.currentTask, param)
                 else
                     self.currentFilter = param
                 end

@@ -26,7 +26,7 @@ function orders.refuel(commanderId, message)
     if needsFuel() then
         print("I need fuel")
         if hasFuel() then
-            logger.info("I have fuel")
+            logger:info("I have fuel")
             if useFuel() then
                 network.send(commanderId, "I used my fuel")
             end
@@ -81,17 +81,17 @@ function orders.position(commanderId)
     network.send(commanderId, "position: " .. navigator.getPosition():tostring())
 end
 function orders.reboot(commanderId, _)
-    logger.info("reboot")
+    logger:info("reboot")
     network.send(commanderId, "rebooting now")
     network.closeConnection()
 end
 function orders.dance(commanderId)
     if needsFuel() then
-        logger.info("need-fuel, cannot dance without some juice")
+        logger:info("need-fuel, cannot dance without some juice")
         network.send(commanderId, "need-fuel, cannot dance without some juice")
         return true
     end
-    logger.info("let's dance")
+    logger:info("let's dance")
     network.send(commanderId, "will dance")
     turtle.forward()
     turtle.forward()
@@ -118,7 +118,7 @@ function orders.dance(commanderId)
     return false
 end
 function orders.ping(commanderId)
-    logger.info("sending pong")
+    logger:info("sending pong")
     network.send(commanderId, "pong")
 end
 
@@ -138,7 +138,7 @@ end
 function needsFuel()
     state.fuel.level = turtle.getFuelLevel()
     local distanceToHome = navigator.distanceToHome()
-    logger.info("I have ", state.fuel.level, " and have distance to home of ", distanceToHome)
+    logger:info("I have ", state.fuel.level, " and have distance to home of ", distanceToHome)
     return state.fuel.level < distanceToHome * 2 or distanceToHome == 0 and state.fuel.level < 100
 end
 
@@ -150,7 +150,7 @@ function hasFuel()
         if success then
             local details = turtle.getItemDetail()
             if utils.isFuel(details) then
-                logger.info("I have fuel " .. details.name)
+                logger:info("I have fuel " .. details.name)
                 state.fuel.inSlot = slot
                 return true, details.name
             end
