@@ -23,26 +23,36 @@ function getFiles()
     return testFiles
 end
 
+-- Hack: Enable global test reporting.
+_G.createGlobalReport = true
+_G.spec = {
+    contexts = {}, passed = 0, failed = 0, current = nil
+}
 
-local startTime = os.clock()
 
-local testFiles = getFiles()
 local success = true
-for _, file in pairs(testFiles) do
+local failedTests = {}
+local startTime = os.clock()
+for _, file in pairs(getFiles()) do
+    failedTests[file] = os.loadAPI(file)
+    if success then
+        success = failedTests[file]
+    end
+end
+local endTime = os.clock()
+local difference = endTime - startTime
 
-    local ok= shell.run(file)
-    if not ok then
-        success = false
-        print("Test: " .. file .. " failed")
-        break
+if success then
+    print("Tests: succeded in ".. difference)
+else
+    for key, _ in pairs(failedTests) do
+        if not failedTests[key] then
+            print("Failed test: " .. key)
+        end
     end
 end
 
-local endTime = os.clock()
-local difference = endTime - startTime
-if success then
-    print("Tests: succeded in ".. difference)
-end
+
 
 
 

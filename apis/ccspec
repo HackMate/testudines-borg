@@ -3,9 +3,13 @@
 -- debug does not exist in cc
 local debug = debug or {traceback = function() return "no traceback" end}
 
-_G.spec = {
-  contexts = {}, passed = 0, failed = 0, current = nil
-}
+
+-- -- Hack: Enable global test reporting. For globall reporting.
+if not _G.createGlobalReport or not _G.spec then
+	_G.spec = {
+	  contexts = {}, passed = 0, failed = 0, current = nil
+	}
+end
 
 _G.describe = function (name)
 	-- Hack reserve hash ordering
