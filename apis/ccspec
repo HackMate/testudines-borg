@@ -108,7 +108,7 @@ _G.matchers = {
     should_succeed = function(fn)
         local success, message = pcall(fn)
         if not success then
-            return false, "function should have succeeded"
+            return false, "function should have succeeded but it failed: " .. message
         end
         return true
     end;

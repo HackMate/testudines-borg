@@ -42,19 +42,19 @@ describe "For a Logger:create('component-name', Level.WARN)" {
 local LevelToString = cclog.LevelToString
 describe "LevelToString" {
     ["should map DEBUG"] = function()
-        expect(LevelToString[1]).should_be("DEBUG")
+        expect(LevelToString[Level.DEBUG]).should_be("DEBUG")
     end,
     ["should map INFO"] = function()
-        expect(LevelToString[2]).should_be("INFO")
+        expect(LevelToString[Level.INFO]).should_be("INFO")
     end,
     ["should map WARN"] = function()
-        expect(LevelToString[3]).should_be("WARN")
+        expect(LevelToString[Level.WARN]).should_be("WARN")
     end,
     ["should map ERROR"] = function()
-        expect(LevelToString[4]).should_be("ERROR")
+        expect(LevelToString[Level.ERROR]).should_be("ERROR")
     end,
     ["should map FATAL"] = function()
-        expect(LevelToString[5]).should_be("FATAL")
+        expect(LevelToString[Level.FATAL]).should_be("FATAL")
     end,
 }
 
@@ -101,6 +101,14 @@ describe "Logger" {
         expect(mockLogger.message).should_be("fatalmessage")
     end,
 
+}
+
+describe "DefaultLogger" {
+    ["write(.., ...) should work"] = function()
+        local logger = cclog.DefaultLogger.create()
+        expect(function() logger:write(Level.INFO, "test")
+        end).should_succeed()
+    end,
 }
 
 spec.report(true)

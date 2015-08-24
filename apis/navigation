@@ -8,6 +8,7 @@ local logger = cclog.Logger:create("Navigation")
 network = {}
 function network.getGpsLocation() error("getGpsLocation must be implemented") end
 
+fileSystem = {}
 
 local state = {
     home = {
@@ -18,7 +19,7 @@ local state = {
 
 function loadState()
     for section, _  in pairs(state) do
-        local file = fs.open(state[section].file, "r")
+        local file = fileSystem.open(state[section].file, "r")
         if file then
             local data = file.readAll()
             file.close()
@@ -35,12 +36,13 @@ end
 function saveState()
     for section, _ in pairs(state) do
         local data = textutils.serialize(state[section])
-        local file = fs.open(state[section].file, "w")
+        local file = fileSystem.open(state[section].file, "w")
         if not file then
             logger:warn("Could not opens state file '" .. state[section].file .. "' for writing.")
         end
         file.write(data)
         file.close()
+
     end
 end
 
@@ -170,7 +172,9 @@ function getHomePosition()
     end
 end
 
-function init(networkController)
+function init(networkController, fsLibrary)
+    fileSystem = fsLibrary or fs or error("could not access fs.*")
+
     for field, _ in pairs(network) do
         if not networkController[field] then
             error("network must implement field: " .. field .. " of type (" .. type(network[field]) .. ")")
@@ -178,6 +182,5 @@ function init(networkController)
     end
 
     network = networkController
-
     loadState()
 end

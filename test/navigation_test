@@ -2,22 +2,62 @@ os.loadAPI("/apis/navigation")
 os.loadAPI("/apis/network")
 os.loadAPI("/apis/model/position")
 
--- Make sure the navigation controller provides the necessary implementation. --
-navigation.init(network)
+os.loadAPI("/apis/ccspec")
 
--- navigation.setHome should throw an error on invalid input --
-local success, _ = pcall(navigation.setHome)
-assert(success == false, "setHome without input should throw an error")
 
--- navigation.setHome should
--- mock --
-local homePos = position.Position:new(0,12,0, position.North)
-function network.getGpsLocation() return homePos end
-navigation.setHome(homePos)
-assert(navigation.isHome())
+describe "navigation basic" {
+    ["init(network) should succeed "] = function()
+        expect(function() navigation.init(network) end).should_succeed()
+    end,
+    ["setHome should fail in case no input is given"] = function()
+        expect(function() navigation.setHome() end).should_fail_with_message("setHome needs a valid position")
+    end,
+}
 
-navigation.saveState()
-navigation.loadState()
-assert(navigation.isHome(), "loading the state should not effect isHome()")
-assert(navigation.getHomePosition() == homePos, "loading the state should be able to fully deserialize the homePosition")
-assert(navigation.getHomePosition().facing == position.North, "loading the state should be able to fully deserialize the homePosition")
+describe "navigation" {
+    before = function()
+        homePos = position.Position:new(0, 12, 0, position.North)
+        function network.getGpsLocation() return homePos end
+
+        local fileMock = {content = nil}
+        function fileMock.write(value)
+            fileMock.content = value
+        end
+        function fileMock.readAll()
+            return fileMock.content
+        end
+        function fileMock.close()  end
+        local fsMock = {}
+        function fsMock.open(file, rights)
+            if fileMock.content ~= nil or string.match(rights, "w") then
+                return fileMock
+            else
+                return nil
+            end
+        end
+
+        navigation.init(network, fsMock)
+
+        navigation.setHome(homePos)
+    end,
+
+    ["setHome(pos) should work"] = function()
+        navigation.setHome(homePos)
+        expect(navigation.isHome()).should_be(true)
+        expect(navigation.getHomePosition()).should_be(homePos)
+        expect(navigation.getHomePosition().facing).should_be(position.North)
+    end,
+
+    ["saveState() - loadState() should not effect isHome()"] = function()
+        navigation.saveState()
+        navigation.loadState()
+        expect(navigation.isHome()).should_be(true)
+    end,
+
+    ["loadState() should should not effect getHomePosition()"] = function()
+        expect(navigation.getHomePosition()).should_be(homePos)
+        expect(navigation.getHomePosition().facing).should_be(position.North)
+    end
+}
+
+spec.report(true)
