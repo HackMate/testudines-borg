@@ -67,8 +67,12 @@ spec.report = function(verbose)
 	%s Expectations
 	Passed : %s, Failed : %s, Success rate : %.2f percent
 	]]
-
-	print (summary:format(total, spec.passed, spec.failed, percent))
+	local report = summary:format(total, spec.passed, spec.failed, percent)
+	if spec.failed ~= 0 then
+		error(report)
+	else
+		print(report)
+	end
 end
 
 _G.matchers = {

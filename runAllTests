@@ -30,10 +30,10 @@ local testFiles = getFiles()
 local success = true
 for _, file in pairs(testFiles) do
 
-    local ok, message = pcall(shell.run, file)
+    local ok= shell.run(file)
     if not ok then
         success = false
-        print("Test: " .. file .. " failed: " .. message)
+        print("Test: " .. file .. " failed")
         break
     end
 end
