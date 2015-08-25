@@ -111,4 +111,24 @@ describe "DefaultLogger" {
     end,
 }
 
+describe "Formatter" {
+    before = function()
+        formatter = cclog.Formatter.create()
+    end,
+
+    ["format(..) should add the level to the message"] = function()
+        expect(formatter:format(Level.DEBUG, "debugmessage")).should_match("DEBUG: debugmessage")
+        expect(formatter:format(Level.INFO, "infomessage")).should_match("INFO: infomessage")
+        expect(formatter:format(Level.WARN, "warnmessage")).should_match("WARN: warnmessage")
+        expect(formatter:format(Level.ERROR, "errormessage")).should_match("ERROR: errormessage")
+        expect(formatter:format(Level.FATAL, "fatalmessage")).should_match("FATAL: fatalmessage")
+    end,
+
+    ["format(..) should be able to handle additional input"] = function()
+        local logMessage = formatter:format(Level.INFO, "message %s %s", "first", "second")
+        expect(logMessage).should_match("INFO: message first second")
+    end,
+
+}
+
 spec.report(true)

@@ -16,10 +16,22 @@ LevelToString = {
 
 DefaultLogger = {}
 function DefaultLogger:create()
-    local self = {}
+    local self = {formatter = Formatter:create()}
 
     function self:write(level, message, ...)
-        print(LevelToString[level] .. ": " .. message, table.unpack({ ... }))
+        print(self.formatter:format(level, message, ...))
+    end
+
+    return self
+end
+
+Formatter = {}
+function Formatter:create()
+    local self = {}
+
+    function self:format(level, message, ...)
+        local timeStamp = textutils.formatTime(os.time(), true) .. "," .. os.clock()
+        return timeStamp .. " " .. LevelToString[level] .. ": " .. string.format(message, table.unpack({...}))
     end
 
     return self

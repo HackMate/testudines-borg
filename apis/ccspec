@@ -100,7 +100,7 @@ _G.matchers = {
 		end
 
 		if not string.match(value, pattern) then
-			return false, value .. "doesn't match pattern "..pattern
+			return false, value .. " doesn't match pattern "..pattern
 		end
 		return true
 	end;
