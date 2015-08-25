@@ -131,4 +131,39 @@ describe "Formatter" {
 
 }
 
+describe "FileLogger" {
+    before = function()
+        mockFileHandler = {closed = false}
+        mockFileHandler.write = function(input) mockFileHandler.input = input  end
+        mockFileHandler.close = function() mockFileHandler.closed = true end
+
+        mockFileSystem = {}
+        mockFileSystem.open = function (fileName, access)
+            mockFileSystem.fileName = fileName
+            mockFileSystem.access = access
+            return mockFileHandler
+        end
+
+        fileLogger = cclog.FileLogger:create("test_filename.log", mockFileSystem)
+    end,
+
+    ["write(..) should open the requested file with access mode 'a'"] = function()
+        fileLogger:write(Level.INFO, "test")
+        expect(mockFileSystem.fileName).should_be("test_filename.log")
+        expect(mockFileSystem.access).should_be("a")
+    end,
+
+    ["write(..) close the file right after it wrote the message"] = function()
+        fileLogger:write(Level.INFO, "message")
+        expect(mockFileHandler.input).should_match("INFO: message")
+        expect(mockFileHandler.closed).should_be(true)
+    end,
+
+    ["write(..) should append a newline to the message"] = function()
+        fileLogger:write(Level.INFO, "message")
+        expect(mockFileHandler.input).should_match("INFO: message\n")
+    end,
+
+}
+
 spec.report(true)

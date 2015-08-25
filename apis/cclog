@@ -25,6 +25,25 @@ function DefaultLogger:create()
     return self
 end
 
+FileLogger = {}
+function FileLogger:create(fileName, fileSystem)
+    local self = {formatter = Formatter:create()}
+
+    local _fileSystem = fileSystem or fs
+    local _fileName = fileName
+
+    function self:write(level, message, ...)
+        local fd = _fileSystem.open(_fileName, "a")
+        if fd then
+            local message = self.formatter:format(level, message, ...)
+            fd.write(message .. "\n")
+            fd.close()
+        end
+    end
+
+    return self
+end
+
 Formatter = {}
 function Formatter:create()
     local self = {}
