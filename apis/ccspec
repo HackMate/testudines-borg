@@ -1,5 +1,9 @@
 -- Original source: https://github.com/mirven/luaspec/tree/74da84cdbf23cccd5cbe99b4edcf6004758c9508
 
+os.loadAPI("/apis/cclog")
+
+local logger = cclog.Logger:create("ccspec")
+
 -- debug does not exist in cc
 local debug = debug or {traceback = function() return "no traceback" end}
 
@@ -44,38 +48,40 @@ spec.report = function(verbose)
 	local contexts = spec.contexts
 
 	if spec.failed == 0 and not verbose then
-		print "all tests passed"
+        logger:info("all tests passed")
 		return
 	end
 
 	-- HACK: preserve hash ordering
 	for index = 1, #contexts do
 		local context, cases = contexts[index], contexts[contexts[index]]
-		print (("%s\n================================"):format(context))
+        logger:info("================================")
+        logger:info (("%s"):format(context))
 
 		for description, result in pairs(cases) do
 			local outcome = result.passed and 'pass' or "FAILED"
 
 			if verbose or not (verbose and result.passed) then
-				print(("%-70s [ %s ]"):format(" - " .. description, outcome))
+                logger:info(("%-70s [ %s ]"):format(" - " .. description, outcome))
 
 				table.foreach(result.errors, function(index, error)
-					print ("   ".. index..". Failed expectation : ".. error.message.."\n   "..error.trace)
+                    logger:info ("   ".. index..". Failed expectation : ".. error.message.."\n   "..error.trace)
 				end)
 			end
 		end
 	end
 
 	local summary = [[
-	=========  Summery  ============
+	=========  Summary  ============
 	%s Expectations
 	Passed : %s, Failed : %s, Success rate : %.2f percent
 	]]
 	local report = summary:format(total, spec.passed, spec.failed, percent)
 	if spec.failed ~= 0 then
+        logger:error(report)
 		error(report)
 	else
-		print(report)
+        logger:info(report)
 	end
 end
 

@@ -1,3 +1,9 @@
+os.loadAPI("/apis/cclog")
+
+_G.GlobalWriter = cclog.FileLogger:create("test.log", fs)
+
+local logger = cclog.Logger:create("runAllTests")
+
 function getFiles()
     local placesToCheck = { "test" }
     local testFiles = {}
@@ -43,11 +49,11 @@ local endTime = os.clock()
 local difference = endTime - startTime
 
 if success then
-    print("Tests: succeded in ".. difference)
+    logger:info("Tests: succeded in ".. difference)
 else
     for key, _ in pairs(failedTests) do
         if not failedTests[key] then
-            print("Failed test: " .. key)
+            logger:warn("Failed test: " .. key)
         end
     end
 end
