@@ -1,4 +1,3 @@
-Logger = {}
 
 Level = {}
 Level.DEBUG = 1
@@ -14,28 +13,29 @@ LevelToString = {
     [5] = "FATAL"
 }
 
-DefaultLogger = {}
-function DefaultLogger:create()
-    local self = {formatter = Formatter:create()}
+function DefaultLogger()
+    local self = {}
 
-    function self:write(level, message, ...)
-        print(self.formatter:format(level, message, ...))
+    local formatter = Formatter()
+
+    function self.write(level, message, ...)
+        print(formatter.format(level, message, ...))
     end
 
     return self
 end
 
-FileLogger = {}
-function FileLogger:create(fileName, fileSystem)
-    local self = {formatter = Formatter:create()}
+function FileLogger(fileName, fileSystem)
+    local self = {}
 
+    local formatter = Formatter()
     local _fileSystem = fileSystem or fs
     local _fileName = fileName
 
-    function self:write(level, message, ...)
+    function self.write(level, message, ...)
         local fd = _fileSystem.open(_fileName, "a")
         if fd then
-            local message = self.formatter:format(level, message, ...)
+            local message = formatter.format(level, message, ...)
             fd.write(message .. "\n")
             fd.close()
         end
@@ -44,11 +44,10 @@ function FileLogger:create(fileName, fileSystem)
     return self
 end
 
-Formatter = {}
-function Formatter:create()
+function Formatter()
     local self = {}
 
-    function self:format(level, message, ...)
+    function self.format(level, message, ...)
         local timeStamp = textutils.formatTime(os.time(), true) .. "," .. os.clock()
         return timeStamp .. " " .. LevelToString[level] .. ": " .. string.format(message, table.unpack({...}))
     end
@@ -56,32 +55,28 @@ function Formatter:create()
     return self
 end
 
-function Logger:create(name)
+function Logger(name)
     local self = { level = Level.INFO, name = name }
 
-    if level then
-        self.level = level
-    end
+    local _writer = GlobalWriter or DefaultLogger()
 
-    local _writer = GlobalWriter or DefaultLogger:create()
-
-    function self:log(level, message, ...)
+    function self.log(level, message, ...)
         if level >= self.level and _writer then
-            _writer:write(level, self.name and self.name .. ": " .. message or message, ...)
+            _writer.write(level, self.name and self.name .. ": " .. message or message, ...)
         end
     end
 
-    function self:debug(...) self:log(Level.DEBUG, ...) end
+    function self.debug(...) self.log(Level.DEBUG, ...) end
 
-    function self:info(...) self:log(Level.INFO, ...) end
+    function self.info(...) self.log(Level.INFO, ...) end
 
-    function self:warn(...) self:log(Level.WARN, ...) end
+    function self.warn(...) self.log(Level.WARN, ...) end
 
-    function self:error(...) self:log(Level.ERROR, ...) end
+    function self.error(...) self.log(Level.ERROR, ...) end
 
-    function self:fatal(...) self:log(Level.FATAL, ...) end
+    function self.fatal(...) self.log(Level.FATAL, ...) end
 
-    function self:setWriter(writer)
+    function self.setWriter(writer)
         _writer = writer
     end
 

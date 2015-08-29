@@ -4,28 +4,28 @@ os.loadAPI("/apis/ccspec")
 local Logger = cclog.Logger
 local Level = cclog.Level
 
-describe "For a Logger:create('component-name', Level.WARN)" {
+describe "For a Logger('component-name', Level.WARN)" {
 
     before = function()
         mockLogger = {}
-        function mockLogger:write(level, message, ...)
-            self.level = level
-            self.message = message
+        function mockLogger.write(level, message, ...)
+            mockLogger.level = level
+            mockLogger.message = message
         end
 
-        logger = Logger:create()
-        logger:setWriter(mockLogger)
+        logger = Logger()
+        logger.setWriter(mockLogger)
         logger.level = Level.WARN
     end,
 
     ["Level.INFO messages should be passed to the writer"] = function()
-        logger:log(Level.WARN, "infomessage")
+        logger.log(Level.WARN, "infomessage")
         expect(mockLogger.level).should_be(Level.WARN)
         expect(mockLogger.message).should_be("infomessage")
     end,
 
     ["Level.DEBUG messages should not be passed to the writer"] = function()
-        logger:log(Level.DEBUG, "debugmessage")
+        logger.log(Level.DEBUG, "debugmessage")
         expect(mockLogger.level).should_be(nil)
         expect(mockLogger.message).should_be(nil)
     end,
@@ -33,7 +33,7 @@ describe "For a Logger:create('component-name', Level.WARN)" {
     ["with logger.name='name' should add the name to the log message"] = function()
         logger.level = Level.INFO
         logger.name = "name"
-        logger:info("testmessage")
+        logger.info("testmessage")
         expect(mockLogger.level).should_be(Level.INFO)
         expect(mockLogger.message).should_be("name: testmessage")
     end
@@ -61,42 +61,42 @@ describe "LevelToString" {
 describe "Logger" {
     before = function()
         mockLogger = {}
-        function mockLogger:write(level, message, ...)
-            self.level = level
-            self.message = message
+        function mockLogger.write(level, message, ...)
+            mockLogger.level = level
+            mockLogger.message = message
         end
 
-        logger = Logger:create()
-        logger:setWriter(mockLogger)
+        logger = Logger()
+        logger.setWriter(mockLogger)
         logger.level = Level.DEBUG
     end,
 
     [":info() should return an info message"] = function()
-        logger:info("infomessage")
+        logger.info("infomessage")
         expect(mockLogger.level).should_be(Level.INFO)
         expect(mockLogger.message).should_be("infomessage")
     end,
 
     [":debug() should return an debug message"] = function()
-        logger:debug("debugmessage")
+        logger.debug("debugmessage")
         expect(mockLogger.level).should_be(Level.DEBUG)
         expect(mockLogger.message).should_be("debugmessage")
     end,
 
     [":warn() should return an warn message"] = function()
-        logger:warn("warnmessage")
+        logger.warn("warnmessage")
         expect(mockLogger.level).should_be(Level.WARN)
         expect(mockLogger.message).should_be("warnmessage")
     end,
 
     [":error() should return an error message"] = function()
-        logger:error("errormessage")
+        logger.error("errormessage")
         expect(mockLogger.level).should_be(Level.ERROR)
         expect(mockLogger.message).should_be("errormessage")
     end,
 
     [":fatal() should return an fatal message"] = function()
-        logger:fatal("fatalmessage")
+        logger.fatal("fatalmessage")
         expect(mockLogger.level).should_be(Level.FATAL)
         expect(mockLogger.message).should_be("fatalmessage")
     end,
@@ -105,27 +105,27 @@ describe "Logger" {
 
 describe "DefaultLogger" {
     ["write(.., ...) should work"] = function()
-        local logger = cclog.DefaultLogger.create()
-        expect(function() logger:write(Level.INFO, "test")
+        local logger = cclog.DefaultLogger()
+        expect(function() logger.write(Level.INFO, "test")
         end).should_succeed()
     end,
 }
 
 describe "Formatter" {
     before = function()
-        formatter = cclog.Formatter.create()
+        formatter = cclog.Formatter()
     end,
 
     ["format(..) should add the level to the message"] = function()
-        expect(formatter:format(Level.DEBUG, "debugmessage")).should_match("DEBUG: debugmessage")
-        expect(formatter:format(Level.INFO, "infomessage")).should_match("INFO: infomessage")
-        expect(formatter:format(Level.WARN, "warnmessage")).should_match("WARN: warnmessage")
-        expect(formatter:format(Level.ERROR, "errormessage")).should_match("ERROR: errormessage")
-        expect(formatter:format(Level.FATAL, "fatalmessage")).should_match("FATAL: fatalmessage")
+        expect(formatter.format(Level.DEBUG, "debugmessage")).should_match("DEBUG: debugmessage")
+        expect(formatter.format(Level.INFO, "infomessage")).should_match("INFO: infomessage")
+        expect(formatter.format(Level.WARN, "warnmessage")).should_match("WARN: warnmessage")
+        expect(formatter.format(Level.ERROR, "errormessage")).should_match("ERROR: errormessage")
+        expect(formatter.format(Level.FATAL, "fatalmessage")).should_match("FATAL: fatalmessage")
     end,
 
     ["format(..) should be able to handle additional input"] = function()
-        local logMessage = formatter:format(Level.INFO, "message %s %s", "first", "second")
+        local logMessage = formatter.format(Level.INFO, "message %s %s", "first", "second")
         expect(logMessage).should_match("INFO: message first second")
     end,
 
@@ -144,23 +144,23 @@ describe "FileLogger" {
             return mockFileHandler
         end
 
-        fileLogger = cclog.FileLogger:create("test_filename.log", mockFileSystem)
+        fileLogger = cclog.FileLogger("test_filename.log", mockFileSystem)
     end,
 
     ["write(..) should open the requested file with access mode 'a'"] = function()
-        fileLogger:write(Level.INFO, "test")
+        fileLogger.write(Level.INFO, "test")
         expect(mockFileSystem.fileName).should_be("test_filename.log")
         expect(mockFileSystem.access).should_be("a")
     end,
 
     ["write(..) close the file right after it wrote the message"] = function()
-        fileLogger:write(Level.INFO, "message")
+        fileLogger.write(Level.INFO, "message")
         expect(mockFileHandler.input).should_match("INFO: message")
         expect(mockFileHandler.closed).should_be(true)
     end,
 
     ["write(..) should append a newline to the message"] = function()
-        fileLogger:write(Level.INFO, "message")
+        fileLogger.write(Level.INFO, "message")
         expect(mockFileHandler.input).should_match("INFO: message\n")
     end,
 

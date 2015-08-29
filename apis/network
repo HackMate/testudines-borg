@@ -1,7 +1,7 @@
 os.loadAPI("/apis/model/position")
 os.loadAPI("/apis/cclog")
 
-local logger = cclog.Logger:create("Network")
+local logger = cclog.Logger("Network")
 
 local function getModemPostion()
     for _, side in pairs(rs.getSides()) do
@@ -23,9 +23,9 @@ end
 function openConnection()
     try(
         function()
-            logger:info("connecting")
+            logger.info("connecting")
             rednet.open(getModemPostion())
-            logger:info("connected")
+            logger.info("connected")
         end
     )
 end
@@ -33,9 +33,9 @@ end
 function closeConnection()
     try(
         function()
-            logger:info("disconnecting")
+            logger.info("disconnecting")
             rednet.close(getModemPostion())
-            logger:info("disconnected")
+            logger.info("disconnected")
         end
     )
 end

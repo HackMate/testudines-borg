@@ -2,7 +2,7 @@ os.loadAPI("/apis/model/position")
 os.loadAPI("/apis/utils")
 os.loadAPI("/apis/cclog")
 
-local logger = cclog.Logger:create("Navigation")
+local logger = cclog.Logger("Navigation")
 
 -- Interface of the required network-controller --
 network = {}
@@ -38,7 +38,7 @@ function saveState()
         local data = textutils.serialize(state[section])
         local file = fileSystem.open(state[section].file, "w")
         if not file then
-            logger:warn("Could not opens state file '" .. state[section].file .. "' for writing.")
+            logger.warn("Could not opens state file '" .. state[section].file .. "' for writing.")
         end
         file.write(data)
         file.close()
@@ -59,7 +59,7 @@ local function seesAChest()
     local success, details = turtle.inspect()
     if success then
         if string.match(string.lower(details.name), "chest") then
-            logger:info("found a chest" .. details.name)
+            logger.info("found a chest" .. details.name)
             return true, details.name
         end
     end
@@ -70,24 +70,24 @@ local function turnTowardsChest()
     while not seesAChest() do
         os.sleep(2)
         turnLeft()
-        logger:info("I am looking for a chest")
+        logger.info("I am looking for a chest")
     end
     return true
 end
 
 function findHome()
-    logger:info("I need a chest to make this my home")
+    logger.info("I need a chest to make this my home")
     turnTowardsChest()
     turnAround()
 
-    logger:info("I like this place")
+    logger.info("I like this place")
     setHome(network.getGpsLocation())
 end
 
 function setHome(pos)
     local isPosition = getmetatable(pos) == position.Position
     if isPosition and pos:isValid() then
-        logger:info("Navigator: Setting home position " .. pos:tostring())
+        logger.info("Navigator: Setting home position " .. pos:tostring())
         state.home.pos = pos
         saveState()
     else
@@ -111,7 +111,7 @@ function goHome()
     if isHome() then
         return true
     else
-        logger:info("Navigation: I do not know how to get home")
+        logger.info("Navigation: I do not know how to get home")
         return false
     end
 end
@@ -151,11 +151,11 @@ end
 
 function getFuel()
     if isHome() and turnTowardsChest() and takeFuelFromChest() then
-        logger:info("Navigation: found fuel")
+        logger.info("Navigation: found fuel")
         turnAround()
         return true
     else
-        logger:info("Navigation: cannot get fuel")
+        logger.info("Navigation: cannot get fuel")
         turnAround()
         return false
     end

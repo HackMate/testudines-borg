@@ -2,7 +2,7 @@ os.loadAPI("/apis/utils")
 os.loadAPI("/apis/cclog")
 os.loadAPI("/apis/drone")
 
-local logger = cclog.Logger:create("Miner")
+local logger = cclog.Logger("Miner")
 
 -- Navigator interface --
 navigator = {}
@@ -29,7 +29,7 @@ function orders.refuel(commanderId, message)
     if needsFuel() then
         print("I need fuel")
         if hasFuel() then
-            logger:info("I have fuel")
+            logger.info("I have fuel")
             if useFuel() then
                 network.send(commanderId, "I used my fuel")
             end
@@ -84,21 +84,21 @@ function orders.position(commanderId)
     network.send(commanderId, "position: " .. navigator.getPosition():tostring())
 end
 function orders.reboot(commanderId, _)
-    logger:info("reboot")
+    logger.info("reboot")
     network.send(commanderId, "rebooting now")
     network.closeConnection()
 end
 function orders.dance(commanderId)
     if needsFuel() then
-        logger:info("need-fuel, cannot dance without some juice")
+        logger.info("need-fuel, cannot dance without some juice")
         network.send(commanderId, "need-fuel, cannot dance without some juice")
         return true
     elseif not navigator.hasHome() then
-        logger:info("don't have a home")
+        logger.info("don't have a home")
         network.send(commanderId, "don't have a home")
         return true
     end
-    logger:info("let's dance")
+    logger.info("let's dance")
     network.send(commanderId, "will dance")
     drone.forward()
     drone.forward()
@@ -126,7 +126,7 @@ function orders.dance(commanderId)
     return false
 end
 function orders.ping(commanderId)
-    logger:info("sending pong")
+    logger.info("sending pong")
     network.send(commanderId, "pong")
 end
 
@@ -146,7 +146,7 @@ end
 function needsFuel()
     state.fuel.level = drone.getFuelLevel()
     local distanceToHome = navigator.distanceToHome()
-    logger:info("I have %s and have a distance to home of %s", state.fuel.level, distanceToHome)
+    logger.info("I have %s and have a distance to home of %s", state.fuel.level, distanceToHome)
     return state.fuel.level < distanceToHome * 2 or distanceToHome == 0 and state.fuel.level < 100
 end
 
@@ -158,7 +158,7 @@ function hasFuel()
         if success then
             local details = drone.getItemDetail()
             if utils.isFuel(details) then
-                logger:info("I have fuel %s", details.name)
+                logger.info("I have fuel %s", details.name)
                 state.fuel.inSlot = slot
                 return true, details.name
             end
