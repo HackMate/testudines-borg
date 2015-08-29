@@ -86,9 +86,13 @@ function orders.reboot(commanderId, _)
     network.closeConnection()
 end
 function orders.dance(commanderId)
-    if needsFuel() then
+    if needsFuel() and navigator.hasHome() then
         logger:info("need-fuel, cannot dance without some juice")
         network.send(commanderId, "need-fuel, cannot dance without some juice")
+        return true
+    else
+        logger:info("don't have a home")
+        network.send(commanderId, "don't have a home")
         return true
     end
     logger:info("let's dance")
