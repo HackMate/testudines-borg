@@ -5,7 +5,19 @@ describe("default matchers") {
 		for _, m in pairs(matchers) do
 			expect(type(m)).should_be("function")
 		end
-	end
+	end,
+
+	["should_be should handle nil values"] = function ()
+		expect(function ()
+			expect(nil).should_be(nil)
+		end).should_succeed()
+	end,
+
+	["should_not_be should handle nil values"] = function ()
+		expect(function ()
+			expect({}).should_not_be(nil)
+		end).should_succeed()
+	end,
 }
 
 spec.report(true)
