@@ -1,0 +1,21 @@
+os.loadAPI("/apis/ccspec")
+os.loadAPI("/apis/drone")
+
+describe "Drone" {
+
+    before = function()
+        drone = drone.Drone()
+    end,
+
+    ["should provide the turtle api"] = function ()
+        for field, _ in pairs(turtle) do
+            if field ~= "native" then
+                if not drone[field] then error(field) end
+                expect(drone[field]).should_not_be(nil)
+            end
+        end
+    end,
+
+}
+
+spec.report(true)

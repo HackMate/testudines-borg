@@ -1,0 +1,95 @@
+os.loadAPI("/apis/ccoop")
+
+local turtleAPI = turtle or error("Cannot access the turtle api")
+
+local function EquipmentHandler()
+    local self = {}
+
+    function self.equipLeft() return turtleAPI.equipLeft() end
+    function self.equipRight() return turtleAPI.equipRight() end
+
+    return self
+end
+
+local function AttackHandler()
+    local self = {}
+
+    function self.attack() return turtleAPI.attack() end
+    function self.attackUp() return turtleAPI.attackUp() end
+    function self.attackDown() return turtleAPI.attackDown() end
+
+    return self
+end
+
+local function InventoryHandler()
+    local self = {}
+
+    function self.suck(number) return turtleAPI.suck(number) end
+    function self.suckUp(number) return turtleAPI.suckUp(number) end
+    function self.suckDown(number) return turtleAPI.suckDown(number) end
+    function self.drop(number) return turtleAPI.drop(number) end
+    function self.dropUp(number) return turtleAPI.dropUp(number) end
+    function self.dropDown(number) return turtleAPI.dropDown(number) end
+    function self.transferTo(slot, quantity) return turtleAPI.transferTo(slot, quantity) end
+    function self.getSelectedSlot() return turtleAPI.getSelectedSlot() end
+    function self.dig() return turtleAPI.dig() end
+    function self.digUp() return turtleAPI.digUp() end
+    function self.digDown() return turtleAPI.digDown() end
+    function self.place(signText) return turtleAPI.place(signText) end
+    function self.placeUp() return turtleAPI.placeUp() end
+    function self.placeDown() return turtleAPI.placeDown() end
+    function self.select(slot) return turtleAPI.select(slot) end
+    function self.getItemDetail(slot) return turtleAPI.getIdemDetail(slot) end
+    function self.getItemSpace(slot) return turtleAPI.getItemSpace(slot) end
+    function self.getItemCount(slot) return turtleAPI.getItemCount(slot) end
+
+    return self
+end
+
+local function InspectorHandler()
+    local self = {}
+
+    function self.inspectUp() return turtleAPI.inspectUp() end
+    function self.inspectDown() return turtleAPI.inspectDown() end
+    function self.inspect() return turtleAPI.inspect() end
+    function self.compare() return turtleAPI.compare() end
+    function self.compareUp() return turtleAPI.compareUp() end
+    function self.compareDown() return turtleAPI.compareDown() end
+    function self.compareTo(slotNumber) return turtleAPI.compareTo(slotNumber) end
+    function self.detect() return turtleAPI.detect() end
+    function self.detectUp() return turtleAPI.detectUp() end
+    function self.detectDown() return turtleAPI.detectDown() end
+
+    return self
+end
+
+local function MovementHandler()
+    local self = {}
+
+    function self.turnLeft() return turtleAPI.turnLeft() end
+    function self.turnRight() return turtleAPI.turnRight() end
+    function self.forward() return turtleAPI.forward() end
+    function self.back() return turtleAPI.back() end
+    function self.up() return turtleAPI.up() end
+    function self.down() return turtleAPI.down() end
+    function self.refuel(quantity) return turtleAPI.getFuelLevel(quantity) end
+    function self.getFuelLevel() return turtleAPI.getFuelLevel() end
+    function self.getFuelLimit() return turtleAPI.getFuelLimit() end
+
+    return self
+end
+
+
+function Drone()
+    local _movementHandler = MovementHandler()
+    local _inspectorHandler = InspectorHandler()
+    local _inventoryHandler = InventoryHandler()
+    local _attackHandler = AttackHandler()
+    local _equipmentHandler = EquipmentHandler()
+
+    local self, super = extend(_movementHandler, _inspectorHandler,
+        _inventoryHandler, _attackHandler, _equipmentHandler)
+
+    return self
+end
+
