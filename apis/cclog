@@ -63,7 +63,7 @@ function Logger:create(name)
         self.level = level
     end
 
-    local _writer = GlobalWriter or error("whatt?")
+    local _writer = GlobalWriter or DefaultLogger:create()
 
     function self:log(level, message, ...)
         if level >= self.level and _writer then

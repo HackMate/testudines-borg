@@ -138,7 +138,7 @@ end
 function needsFuel()
     state.fuel.level = turtle.getFuelLevel()
     local distanceToHome = navigator.distanceToHome()
-    logger:info("I have ", state.fuel.level, " and have distance to home of ", distanceToHome)
+    logger:info("I have %s and have a distance to home of %s", state.fuel.level, distanceToHome)
     return state.fuel.level < distanceToHome * 2 or distanceToHome == 0 and state.fuel.level < 100
 end
 
@@ -150,7 +150,7 @@ function hasFuel()
         if success then
             local details = turtle.getItemDetail()
             if utils.isFuel(details) then
-                logger:info("I have fuel " .. details.name)
+                logger:info("I have fuel %s", details.name)
                 state.fuel.inSlot = slot
                 return true, details.name
             end
