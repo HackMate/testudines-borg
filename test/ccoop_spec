@@ -1,0 +1,40 @@
+os.loadAPI("/apis/ccspec")
+os.loadAPI("/apis/ccoop")
+
+local extend = extend or error("ccop.extend is not available in global scope")
+
+describe "ccoop.extend" {
+
+    before = function()
+        local function BaseClass()
+            local self = {}
+            function self.notOverridenMethod() return "notOverridenMethod" end
+            function self.overridenMethod() return "overridenMethod" end
+            return self
+        end
+
+        function DerivedClass()
+            local _baseClass = BaseClass()
+            local self, super = extend(_baseClass)
+            function self.overridenMethod()
+                return "DerivedClass: " .. super.overridenMethod()
+            end
+
+            return self
+        end
+
+        derivedClass = DerivedClass()
+    end,
+
+
+    ["should give access to the super classes method"] = function ()
+        expect(derivedClass.notOverridenMethod()).should_be "notOverridenMethod"
+    end,
+
+    ["should allow a class to override its parents methods"] = function ()
+        expect(derivedClass.overridenMethod()).should_be "DerivedClass: overridenMethod"
+    end,
+
+}
+
+spec.report(true)

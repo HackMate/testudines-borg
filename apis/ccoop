@@ -1,0 +1,33 @@
+-- look up for `k' in list of tables `plist'
+local function search (key, tableList)
+    for idx =1, table.getn(tableList) do
+        local value = tableList[idx][key]     -- try `i'-th superclass
+        if value then return value end
+    end
+end
+
+local function newClass(...)
+    local parentTables = arg
+    local function methodLookup(self, methodName)
+        local method = search(methodName, parentTables)
+        self[methodName] = method -- save for next access
+        return method
+    end
+
+    local self = {}
+    setmetatable(self, {__index = methodLookup})
+    self.__index = self
+
+    return self
+end
+
+function extend (...)
+    local self = newClass(...)
+
+    local super = newClass(...)
+
+    return self, super
+end
+
+-- Global export
+_G.extend = extend
