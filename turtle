@@ -6,12 +6,10 @@ os.loadAPI("/apis/cclog")
 
 local logger = cclog.Logger:create("WireLessCommandReceiver")
 
-WireLessCommandReceiver = {}
-
-function WireLessCommandReceiver:create(network, taskRunner)
+function WireLessCommandReceiver(network, taskRunner)
     local self = {}
-    self.network = network
-    self.taskRunner = taskRunner
+    local network = network
+    local taskRunner = taskRunner
 
     local function receiveOrder()
         logger:info("Awaiting orders")
@@ -22,15 +20,15 @@ function WireLessCommandReceiver:create(network, taskRunner)
         end
     end
 
-    function self:run()
+    function self.run()
         logger:info("started")
 
         repeat
             local newOrder, commanderId, command = receiveOrder()
 
             if newOrder then
-                self.taskRunner:terminateCurrentTask()
-                self.taskRunner:schedule(function() newOrder(commanderId, command) end)
+                taskRunner.terminateCurrentTask()
+                taskRunner.schedule(function() newOrder(commanderId, command) end)
             end
 
         until command == "reboot"
@@ -101,10 +99,10 @@ network.init()
 navigation.init(network)
 miner.init(navigation)
 
-taskRunner = tasks.SerialTaskRunner:create()
-commandReceiver = WireLessCommandReceiver:create(network, taskRunner)
+taskRunner = tasks.SerialTaskRunner()
+commandReceiver = WireLessCommandReceiver(network, taskRunner)
 
-waitForAll(function() commandReceiver:run() end, function() taskRunner:run() end)
+waitForAll(function() commandReceiver.run() end, function() taskRunner.run() end)
 
 print("rebooting")
 os.reboot()

@@ -2,87 +2,83 @@ os.loadAPI("/apis/cclog")
 
 local logger = cclog.Logger:create("SerialTaskRunner")
 
-TaskQueue = {}
+function TaskQueue()
+    local self = {}
+    local first = 0
+    local last = -1
 
-function TaskQueue:create()
-    local self = {first = 0, last = -1}
-
-    function self:pushleft (value)
-        local first = self.first - 1
-        self.first = first
+    function self.pushleft (value)
+        first = first - 1
         self[first] = value
     end
 
-    function self:pushright (value)
-        local last = self.last + 1
-        self.last = last
+    function self.pushright (value)
+        last = last + 1
         self[last] = value
     end
 
-    function self:popleft ()
-        local first = self.first
-        if first > self.last then error("task queue is empty") end
+    function self.popleft ()
+        if first > last then error("task queue is empty") end
         local value = self[first]
         self[first] = nil        -- to allow garbage collection
-        self.first = first + 1
+        first = first + 1
         return value
     end
 
-    function self:popright ()
-        local last = self.last
-        if self.first > last then error("task queue is empty") end
+    function self.popright ()
+        if first > last then error("task queue is empty") end
         local value = self[last]
         self[last] = nil         -- to allow garbage collection
-        self.last = last - 1
+        last = last - 1
         return value
     end
 
-    function self:isempty()
-        return self.first == self.last + 1
+    function self.isempty()
+        return first == last + 1
     end
 
     return self
 end
 
-SerialTaskRunner = {}
-function SerialTaskRunner:create()
+function SerialTaskRunner()
     local self = {}
 
-    self.taskQueue = TaskQueue:create()
-    self.currentTask = nil
-    self.abortTask = false
+    local taskQueue = TaskQueue()
+    local currentTask
+    local currentFilter
+    local abortTask = false
 
-    function self:run()
+    function self.run()
         local eventData = {}
         repeat
 
-            if self.currentTask == nil and not self.taskQueue:isempty() then
+            if currentTask == nil and not taskQueue.isempty() then
                 logger:info("setting current task")
-                self.currentTask = self.taskQueue:popright()
+                currentTask = taskQueue.popright()
             end
 
-            if self.currentTask ~= nil and self.abortTask == true  then
+            if currentTask ~= nil and abortTask == true  then
                 logger:info("Terminating current task")
-                self.abortTask = false
+                abortTask = false
                 eventData = {"terminate"}
             end
 
-            if self.currentTask ~= nil and (
-                    self.currentFilter == nil or
-                    self.currentFilter == eventData[1] or
+            if currentTask ~= nil and (
+                    currentFilter == nil or
+                    currentFilter == eventData[1] or
                     eventData[1] == "terminate") then
                 logger:info("Resuming task")
-                local ok, param = coroutine.resume(self.currentTask, table.unpack(eventData))
+                local ok, param = coroutine.resume(currentTask, table.unpack(eventData))
                 if not ok then
-                    logger:info("task failed ", self.currentTask, param)
+                    logger:info("task failed ", currentTask, param)
                 else
-                    self.currentFilter = param
+                    currentFilter = param
                 end
 
-                if coroutine.status(self.currentTask) == "dead" then
-                    logger:info("task ended ", self.currentTask)
-                    self.currentTask = nil
-                    self.currentFilter = nil
+                if coroutine.status(currentTask) == "dead" then
+                    logger:info("task ended ", currentTask)
+                    currentTask = nil
+                    currentFilter = nil
                 end
 
             end
@@ -94,17 +90,17 @@ function SerialTaskRunner:create()
         logger:info("Going down")
     end
 
-    function self:schedule(task)
+    function self.schedule(task)
         if type(task) ~= "function" then
             error("Expected function, got" .. type(task), 3)
         end
         local routine = coroutine.create(task)
         logger:info("Scheduling task", routine)
-        self.taskQueue:pushleft(routine)
+        taskQueue.pushleft(routine)
     end
 
-    function self:terminateCurrentTask()
-        self.abortTask = true
+    function self.terminateCurrentTask()
+        abortTask = true
     end
 
     return self

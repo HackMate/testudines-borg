@@ -72,7 +72,7 @@ local function MovementHandler()
     function self.back() return turtleAPI.back() end
     function self.up() return turtleAPI.up() end
     function self.down() return turtleAPI.down() end
-    function self.refuel(quantity) return turtleAPI.getFuelLevel(quantity) end
+    function self.refuel(quantity) return turtleAPI.refuel(quantity) end
     function self.getFuelLevel() return turtleAPI.getFuelLevel() end
     function self.getFuelLimit() return turtleAPI.getFuelLimit() end
 

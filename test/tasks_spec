@@ -6,54 +6,54 @@ local TaskQueue = tasks.TaskQueue
 
 describe "TaskQueue" {
     before = function()
-        taskQueue = TaskQueue:create()
+        taskQueue = TaskQueue()
     end,
 
     ["TaskQueue:isempty() should be able to determine an empty queue"] = function()
-        expect(taskQueue:isempty()).should_be(true)
+        expect(taskQueue.isempty()).should_be(true)
     end,
 
     ["one element should be poped right if pushed left"] = function()
-        taskQueue:pushleft(1)
-        expect(taskQueue:popright()).should_be(1)
+        taskQueue.pushleft(1)
+        expect(taskQueue.popright()).should_be(1)
     end,
 
     ["one element should be poped left if pushed right"] = function()
-        taskQueue:pushright(2)
-        expect(taskQueue:popleft()).should_be(2)
+        taskQueue.pushright(2)
+        expect(taskQueue.popleft()).should_be(2)
     end,
 
     ["TaskQueue:popright() should behave fifo like"] = function()
-        taskQueue:pushleft(1)
-        taskQueue:pushleft(2)
-        taskQueue:pushleft(3)
-        taskQueue:pushleft(4)
+        taskQueue.pushleft(1)
+        taskQueue.pushleft(2)
+        taskQueue.pushleft(3)
+        taskQueue.pushleft(4)
 
-        expect(taskQueue:popright()).should_be(1)
-        expect(taskQueue:popright()).should_be(2)
-        expect(taskQueue:popright()).should_be(3)
-        expect(taskQueue:popright()).should_be(4)
+        expect(taskQueue.popright()).should_be(1)
+        expect(taskQueue.popright()).should_be(2)
+        expect(taskQueue.popright()).should_be(3)
+        expect(taskQueue.popright()).should_be(4)
     end,
 
 
     ["TaskQueue:popleft() should behave fifo like"] = function()
-        taskQueue:pushright(1)
-        taskQueue:pushright(2)
-        taskQueue:pushright(3)
-        taskQueue:pushright(4)
+        taskQueue.pushright(1)
+        taskQueue.pushright(2)
+        taskQueue.pushright(3)
+        taskQueue.pushright(4)
 
-        expect(taskQueue:popleft()).should_be(1)
-        expect(taskQueue:popleft()).should_be(2)
-        expect(taskQueue:popleft()).should_be(3)
-        expect(taskQueue:popleft()).should_be(4)
+        expect(taskQueue.popleft()).should_be(1)
+        expect(taskQueue.popleft()).should_be(2)
+        expect(taskQueue.popleft()).should_be(3)
+        expect(taskQueue.popleft()).should_be(4)
     end,
 
     ["TaskQueue:popright() should throw an error on an empty queue"] = function()
-        expect(function() taskQueue:popright() end).should_fail_with_message("task queue is empty")
+        expect(function() taskQueue.popright() end).should_fail_with_message("task queue is empty")
     end,
 
     ["TaskQueue:popleft() should throw an error on an empty queue"] = function()
-        expect(function() taskQueue:popleft() end).should_fail_with_message("task queue is empty")
+        expect(function() taskQueue.popleft() end).should_fail_with_message("task queue is empty")
     end
 
 }
