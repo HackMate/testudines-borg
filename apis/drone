@@ -1,6 +1,9 @@
 os.loadAPI("/apis/ccoop")
+os.loadAPI("/apis/cclog")
+os.loadAPI("/apis/utils")
 
 local turtleAPI = turtle or error("Cannot access the turtle api")
+local utils = utils or error("Cannot located utils api")
 
 local function EquipmentHandler()
     local self = {}
@@ -23,6 +26,7 @@ end
 
 local function InventoryHandler()
     local self = {}
+    local logger = cclog.Logger("InventoryHandler")
 
     function self.suck(number) return turtleAPI.suck(number) end
     function self.suckUp(number) return turtleAPI.suckUp(number) end
@@ -42,6 +46,37 @@ local function InventoryHandler()
     function self.getItemDetail(slot) return turtleAPI.getIdemDetail(slot) end
     function self.getItemSpace(slot) return turtleAPI.getItemSpace(slot) end
     function self.getItemCount(slot) return turtleAPI.getItemCount(slot) end
+
+    local state = { fuelInSlot = 0 }
+    function self.hasFuel()
+        local slot = 0
+        repeat
+            slot = slot+1
+            local success, _ = pcall(function() self.select(slot) end)
+            if success then
+                local details = self.getItemDetail()
+                if utils.isFuel(details) then
+                    logger.info("I have fuel %s", details.name)
+                    state.fuelInSlot = slot
+                    return true, details.name
+                end
+            end
+        until success == false
+
+        return false
+    end
+
+    function self.useFuel(slot)
+        if slot then
+            state.fuelInSlot = slot
+        end
+        if state.fuelInSlot then
+            self.select(state.fuelInSlot)
+            return self.refuel()
+        else
+            return false
+        end
+    end
 
     return self
 end
@@ -63,8 +98,12 @@ local function InspectorHandler()
     return self
 end
 
-local function MovementHandler()
+local function MovementHandler(navigator)
     local self = {}
+
+    local navigator = navigator
+    local state = {fuelLevel = 0}
+    local logger = cclog.Logger("MovementHandler")
 
     function self.turnLeft() return turtleAPI.turnLeft() end
     function self.turnRight() return turtleAPI.turnRight() end
@@ -73,15 +112,25 @@ local function MovementHandler()
     function self.up() return turtleAPI.up() end
     function self.down() return turtleAPI.down() end
     function self.refuel(quantity) return turtleAPI.refuel(quantity) end
-    function self.getFuelLevel() return turtleAPI.getFuelLevel() end
+    function self.getFuelLevel()
+        state.fuelLevel = turtleAPI.getFuelLevel()
+        return state.fuelLevel
+    end
     function self.getFuelLimit() return turtleAPI.getFuelLimit() end
+
+    function self.needsFuel()
+        local distanceToHome = navigator.distanceToHome()
+        local fuelLevel = self.getFuelLevel()
+        logger.info("I have %d fuel and have a distance to home of %s", fuelLevel, distanceToHome)
+        return fuelLevel < distanceToHome * 2 or distanceToHome == 0 and fuelLevel < 100
+    end
 
     return self
 end
 
 
-function Drone()
-    local _movementHandler = MovementHandler()
+function Drone(navigator)
+    local _movementHandler = MovementHandler(navigator)
     local _inspectorHandler = InspectorHandler()
     local _inventoryHandler = InventoryHandler()
     local _attackHandler = AttackHandler()
@@ -89,6 +138,25 @@ function Drone()
 
     local self, super = extend(_movementHandler, _inspectorHandler,
         _inventoryHandler, _attackHandler, _equipmentHandler)
+
+    local function makeAmove(move, retries)
+        if retries and retries < 1 then
+            return false
+        end
+        if move() then
+            return true
+        else -- Try again --
+            os.sleep(0.2)
+            _attackHandler.attack()
+        return makeAmove(move, retries and retries-1 or 20)
+        end
+    end
+
+    function self.forward() return makeAmove(super.forward) end
+    function self.back() return makeAmove(super.back) end
+    function self.up() return makeAmove(super.up) end
+    function self.down() return makeAmove(super.down) end
+
 
     return self
 end

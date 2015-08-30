@@ -1,0 +1,197 @@
+os.loadAPI("/apis/cclog")
+
+
+function ClearHomeAction(network, navigator)
+    local self = {}
+    local network = network
+    local navigator = navigator
+
+    function self.execute(commanderId, _)
+        local success, message = navigator.clearHome()
+        if success then
+            network.send(commanderId, "cleared home")
+        else
+            network.send(commanderId, "could not clear home" .. message)
+        end
+    end
+
+    return self
+end
+
+function DanceAction(network, navigator, drone)
+    local self = {}
+    local network = network
+    local drone = drone
+    local logger = cclog.Logger("DanceAction")
+
+    function self.execute(commanderId, _)
+        if drone.needsFuel() then
+            logger.info("need-fuel, cannot dance without some juice")
+            network.send(commanderId, "need-fuel, cannot dance without some juice")
+            return true
+        elseif not navigator.hasHome() then
+            logger.info("don't have a home")
+            network.send(commanderId, "don't have a home")
+            return true
+        end
+        logger.info("let's dance")
+        network.send(commanderId, "will dance")
+        drone.forward()
+        drone.forward()
+        for i=1,2,1 do
+            drone.up()
+            drone.up()
+            drone.forward()
+            drone.down()
+            drone.turnRight()
+            drone.forward()
+            drone.back()
+
+            drone.turnLeft()
+            drone.turnLeft()
+
+            drone.forward()
+            drone.back()
+            drone.turnRight()
+            drone.down()
+            drone.back()
+        end
+        drone.back()
+        drone.back()
+
+        return true
+    end
+
+    return self
+end
+
+function GetDistanceToHome(network, navigator)
+    local self = {}
+    local network = network
+    local navigator = navigator
+
+    function self.execute(commanderId, message)
+        network.send(commanderId, "distanceToHome: " .. navigator.distanceToHome())
+    end
+
+    return self
+end
+
+function FindHomeAction(network, navigator)
+    local self = {}
+    local network = network
+    local navigator = navigator
+
+    function self.execute(commanderId, message)
+        network.send(commanderId, "will find a new home")
+        navigator.findHome()
+        network.send(commanderId, "has a home at " .. navigator.getHomePosition():tostring())
+    end
+
+    return self
+end
+
+function GetFuleLevelAction(network, _, drone)
+    local self = {}
+    local network = network
+    local drone = drone
+
+    function self.execute(commanderId, _)
+        network.send(commanderId, "fuelLevel: " .. drone.getFuelLevel())
+    end
+
+    return self
+end
+
+function HasHomeAction(network, navigator)
+    local self = {}
+    local network = network
+    local navigator = navigator
+
+    function self.execute(commanderId, message)
+        if navigator.hasHome() then
+            network.send(commanderId, "has a home at " .. navigator.getHomePosition():tostring())
+        else
+            network.send(commanderId, "has no home")
+        end
+    end
+
+    return self
+end
+
+function GetHomePositionAction(network, navigator)
+    local self = {}
+    local network = network
+    local navigator = navigator
+
+    function self.execute(commanderId, _)
+        network.send(commanderId, "homePosition: " .. navigator.getHomePosition().tostring())
+    end
+
+    return self
+end
+
+function PingAction(network)
+    local self = {}
+    local network = network
+    local logger = cclog.Logger("PingAction")
+
+    function self.execute(commanderId, message)
+        logger.info("sending pong")
+        network.send(commanderId, "pong")
+    end
+
+    return self
+end
+
+function GetPositionAction(network, navigator)
+    local self = {}
+    local _network = network
+    local _navigator = navigator
+    print("navigator", navigator)
+
+
+    function self.execute(commanderId, message)
+        print(navigator)
+        network.send(commanderId, "position: " .. navigator.getPosition().tostring())
+    end
+
+    return self
+end
+
+function RefuelAction(network, navigator, drone)
+    local self = {}
+    local network = network
+    local navigator = navigator
+    local drone = drone
+    local logger = cclog.Logger("RefuelAction")
+
+    function self.execute(commanderId, message)
+        if drone.needsFuel() then
+            logger.info("I need fuel")
+            if drone.hasFuel() then
+                logger.info("I have fuel")
+                if drone.useFuel() then
+                    network.send(commanderId, "I used my fuel")
+                end
+            end
+            if drone.needsFuel() then
+                network.send(commanderId, "I don't have fuel, going home.")
+                navigator.goHome()
+                if navigator.getFuel() and drone.hasFuel() then
+                    drone.useFuel()
+                else
+                    -- Order did not finish.
+                    return false
+                end
+            end
+        else
+            local message = "I do not need to refuel fuelLevel: " .. drone.getFuelLevel() ..
+                    " distanceToHome: " .. navigator.distanceToHome()
+            logger.info(message)
+            network.send(commanderId, message)
+        end
+    end
+
+    return self
+end

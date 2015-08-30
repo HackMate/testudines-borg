@@ -3,8 +3,29 @@ os.loadAPI("apis/miner")
 os.loadAPI("apis/navigation")
 os.loadAPI("/apis/tasks")
 os.loadAPI("/apis/cclog")
+os.loadAPI("/apis/actions")
 
 local logger = cclog.Logger("WireLessCommandReceiver")
+
+
+network.init()
+navigation.init(network)
+miner.init(navigation)
+local drone = drone.Drone(navigation)
+
+local Task = tasks.Task
+local Orders = {}
+Orders.clearHome      = Task("clearHome",      actions.ClearHomeAction(network, navigation, drone))
+Orders.dance          = Task("dance",          actions.DanceAction(network, navigation, drone))
+Orders.distanceToHome = Task("distanceToHome", actions.GetDistanceToHome(network, navigation, drone))
+Orders.findHome       = Task("findHome",       actions.FindHomeAction(network, navigation, drone))
+Orders.fuelLevel      = Task("fuelLevel",      actions.GetFuleLevelAction(network, navigation, drone))
+Orders.hasHome        = Task("hasHome",        actions.HasHomeAction(network, navigation, drone))
+Orders.homePosition   = Task("homePosition",   actions.GetHomePositionAction(network, navigation, drone))
+Orders.ping           = Task("ping",           actions.PingAction(network, navigation, drone))
+Orders.position       = Task("position",       actions.GetPositionAction(network, navigation, drone))
+Orders.refuel         = Task("refuel",         actions.RefuelAction(network, navigation, drone))
+
 
 function WireLessCommandReceiver(network, taskRunner)
     local self = {}
@@ -14,21 +35,25 @@ function WireLessCommandReceiver(network, taskRunner)
     local function receiveOrder()
         logger.info("Awaiting orders")
         local id, orderName = network.receive(10)
-        if miner.orders[orderName] then
-            logger.info("Received order")
-            return miner.orders[orderName], id, orderName
-        end
+        logger.info("Received order %s", orderName)
+        return Orders[orderName], id, orderName
     end
 
     function self.run()
         logger.info("started")
 
         repeat
-            local newOrder, commanderId, command = receiveOrder()
+            local newTask, commanderId, command = receiveOrder()
 
-            if newOrder then
-                taskRunner.terminateCurrentTask()
-                taskRunner.schedule(function() newOrder(commanderId, command) end)
+            if newTask then
+                taskRunner.replaceCurrentTask(newTask.withArguments(commanderId, command))
+            elseif command and string.match("abortTask", command) then
+                if taskRunner.currentTask then
+                    network.send(commanderId, "terminating-task" .. taskRunner.currentTask.name)
+                    taskRunner.terminateCurrentTask()
+                else
+                    network.send(commanderId, "there is no task running")
+                end
             end
 
         until command == "reboot"
@@ -94,10 +119,6 @@ function waitForAll( ... )
 end
 
 -- main --
-
-network.init()
-navigation.init(network)
-miner.init(navigation)
 
 taskRunner = tasks.SerialTaskRunner()
 commandReceiver = WireLessCommandReceiver(network, taskRunner)

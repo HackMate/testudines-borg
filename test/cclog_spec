@@ -129,6 +129,11 @@ describe "Formatter" {
         expect(logMessage).should_match("INFO: message first second")
     end,
 
+    ["format(..) should be able to handle nil input"] = function()
+        local logMessage = formatter.format(Level.INFO, "message %s", nil)
+        expect(logMessage).should_match("INFO: message %<%?%>")
+    end,
+
 }
 
 describe "FileLogger" {

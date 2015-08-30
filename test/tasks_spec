@@ -58,5 +58,36 @@ describe "TaskQueue" {
 
 }
 
+local Task = tasks.Task or error("Task class is missing")
+
+describe "Task(name, Action)" {
+
+    before = function()
+        action = {execute = function() end}
+        task = Task("name", action)
+    end,
+
+    ["should have a name"] = function()
+        expect(task.name).should_be("name")
+    end,
+
+    ["should have an Action"] = function()
+        expect(task.execute).should_not_be(nil)
+    end,
+
+    ["should throw an error in case the Action has no key \"execute\""] = function()
+        expect(
+            function() return Task("name", {}) end
+        ).should_fail_with_message("Action has no function .execute")
+    end,
+
+    ["should throw an error in case the Actions key \"execute\" does not point to a function"] = function()
+        expect(
+            function() return Task("name", {execute=""}) end
+        ).should_fail_with_message("Action has no function .execute")
+    end,
+
+}
+
 
 spec.report(true)

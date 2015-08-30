@@ -49,7 +49,12 @@ function Formatter()
 
     function self.format(level, message, ...)
         local timeStamp = textutils.formatTime(os.time(), true) .. "," .. os.clock()
-        return timeStamp .. " " .. LevelToString[level] .. ": " .. string.format(message, table.unpack({...}))
+        local values = {...}
+        local success, formatedMessage = pcall(function () return string.format(message, table.unpack(values)) end)
+        if not success then
+            formatedMessage = string.gsub(message, "%%s", "<?>")
+        end
+        return timeStamp .. " " .. LevelToString[level] .. ": " .. formatedMessage
     end
 
     return self

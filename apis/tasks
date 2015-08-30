@@ -1,6 +1,24 @@
 os.loadAPI("/apis/cclog")
 
-local logger = cclog.Logger("SerialTaskRunner")
+function Task(name, action)
+    if not action.execute or type(action.execute) ~= "function" then
+        error("Action has no function .execute")
+    end
+
+    local self = { name = name, arguments = {}, routine = nil }
+
+
+    function self.withArguments(...)
+        self.arguments = {... }
+        return self
+    end
+
+    function self.execute()
+        return action.execute(table.unpack(self.arguments))
+    end
+
+    return self
+end
 
 function TaskQueue()
     local self = {}
@@ -41,10 +59,11 @@ function TaskQueue()
 end
 
 function SerialTaskRunner()
-    local self = {}
+    local self = {currentTask = nil}
+
+    local logger = cclog.Logger("SerialTaskRunner")
 
     local taskQueue = TaskQueue()
-    local currentTask
     local currentFilter
     local abortTask = false
 
@@ -52,51 +71,65 @@ function SerialTaskRunner()
         local eventData = {}
         repeat
 
-            if currentTask == nil and not taskQueue.isempty() then
+            if self.currentTask == nil and not taskQueue.isempty() then
                 logger.info("setting current task")
-                currentTask = taskQueue.popright()
+                self.currentTask = taskQueue.popright()
             end
 
-            if currentTask ~= nil and abortTask == true  then
+            if self.currentTask ~= nil and abortTask == true  then
                 logger.info("Terminating current task")
                 abortTask = false
                 eventData = {"terminate"}
             end
 
-            if currentTask ~= nil and (
+            if self.currentTask ~= nil and (
                     currentFilter == nil or
                     currentFilter == eventData[1] or
                     eventData[1] == "terminate") then
+
                 logger.info("Resuming task")
-                local ok, param = coroutine.resume(currentTask, table.unpack(eventData))
+                local ok, param = coroutine.resume(self.currentTask.routine, table.unpack(eventData))
                 if not ok then
-                    logger.info("task failed ", currentTask, param)
+                    logger.info("task (%s) failed: %s ", self.currentTask.name, param)
                 else
                     currentFilter = param
                 end
 
-                if coroutine.status(currentTask) == "dead" then
-                    logger.info("task ended ", currentTask)
-                    currentTask = nil
+                if coroutine.status(self.currentTask.routine) == "dead" then
+                    logger.info("task (%s) ended", self.currentTask.name)
+                    self.currentTask.routine = nil
+                    self.currentTask = nil
                     currentFilter = nil
                 end
 
             end
+
             logger.debug("yielding")
             eventData = {coroutine.yield()}
-            logger.debug("resuming", table.unpack(eventData))
+            logger.debug("resuming")
+
         until eventData[1] == "reboot" or eventData[1] == "terminate"
 
         logger.info("Going down")
     end
 
     function self.schedule(task)
-        if type(task) ~= "function" then
+        if type(task.execute) ~= "function" then
             error("Expected function, got" .. type(task), 3)
         end
-        local routine = coroutine.create(task)
-        logger.info("Scheduling task", routine)
-        taskQueue.pushleft(routine)
+        task.routine = coroutine.create(task.execute)
+        logger.info("Scheduling task", task.name)
+        taskQueue.pushleft(task)
+    end
+
+    function self.replaceCurrentTask(newTask)
+        self.schedule(newTask)
+        if self.currentTask then
+            logger.info("Replacing task %s", self.currentTask.name)
+            taskQueue.pushleft(self.currentTask)
+            self.currentTask = nil
+            currentFilter = nil
+        end
     end
 
     function self.terminateCurrentTask()
