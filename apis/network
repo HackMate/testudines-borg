@@ -3,62 +3,66 @@ os.loadAPI("/apis/cclog")
 
 local logger = cclog.Logger("Network")
 
-local function getModemPostion()
-    for _, side in pairs(rs.getSides()) do
-        if peripheral.getType(side) == "modem" then
-            return side
+function Network()
+    local self = {}
+
+    local function getModemPostion()
+        for _, side in pairs(rs.getSides()) do
+            if peripheral.getType(side) == "modem" then
+                return side
+            end
+        end
+        error("Turtle does not seem to have a modem.")
+    end
+
+    -- Helper that wrapps error messages --
+    local function try(func)
+        local success, message = pcall(func)
+        if not success then
+            error("Network error: " .. message)
         end
     end
-    error("Turtle does not seem to have a modem.")
-end
 
--- Helper that wrapps error messages --
-local function try(func)
-    local success, message = pcall(func)
-    if not success then
-        error("Network error: " .. message)
+    function self.openConnection()
+        try(
+            function()
+                logger.info("connecting")
+                rednet.open(getModemPostion())
+                logger.info("connected")
+            end
+        )
     end
-end
 
-function openConnection()
-    try(
-        function()
-            logger.info("connecting")
-            rednet.open(getModemPostion())
-            logger.info("connected")
+    function self.closeConnection()
+        try(
+            function()
+                logger.info("disconnecting")
+                rednet.close(getModemPostion())
+                logger.info("disconnected")
+            end
+        )
+    end
+
+    function self.send(id, message)
+        if id then
+            return rednet.send(id, message)
         end
-    )
-end
+    end
 
-function closeConnection()
-    try(
-        function()
-            logger.info("disconnecting")
-            rednet.close(getModemPostion())
-            logger.info("disconnected")
+    function self.receive(filter, timeout)
+        return rednet.receive(filter, timeout)
+    end
+
+    function self.getGpsLocation()
+        local x, y, z = gps.locate()
+        if x then
+            return position.Position(x, y, z)
+        else
+            return position.Position()
         end
-    )
-end
-
-function send(id, message)
-    if id then
-        return rednet.send(id, message)
     end
-end
 
-function receive(filter, timeout)
-    return rednet.receive(filter, timeout)
-end
+    self.openConnection()
 
-function getGpsLocation()
-    local x, y, z = gps.locate()
-    if x then
-        return position.Position(x, y, z)
-    else
-        return position.Position()
-    end
-end
-
-function init()
-    openConnection()
+    return self
 end

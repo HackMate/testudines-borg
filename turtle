@@ -8,22 +8,22 @@ os.loadAPI("/apis/actions")
 local logger = cclog.Logger("WireLessCommandReceiver")
 
 
-network.init()
-local navigator = navigation.Navigator(network)
+local networkAccess = network.Network()
+local navigator = navigation.Navigator(networkAccess)
 local drone = drone.Drone(navigator)
 
 local Task = tasks.Task
 local Orders = {}
-Orders.clearHome      = Task("clearHome",      actions.ClearHomeAction(network, navigator, drone))
-Orders.dance          = Task("dance",          actions.DanceAction(network, navigator, drone))
-Orders.distanceToHome = Task("distanceToHome", actions.GetDistanceToHome(network, navigator, drone))
-Orders.findHome       = Task("findHome",       actions.FindHomeAction(network, navigator, drone))
-Orders.fuelLevel      = Task("fuelLevel",      actions.GetFuleLevelAction(network, navigator, drone))
-Orders.hasHome        = Task("hasHome",        actions.HasHomeAction(network, navigator, drone))
-Orders.homePosition   = Task("homePosition",   actions.GetHomePositionAction(network, navigator, drone))
-Orders.ping           = Task("ping",           actions.PingAction(network, navigator, drone))
-Orders.position       = Task("position",       actions.GetPositionAction(network, navigator, drone))
-Orders.refuel         = Task("refuel",         actions.RefuelAction(network, navigator, drone))
+Orders.clearHome      = Task("clearHome",      actions.ClearHomeAction(networkAccess, navigator, drone))
+Orders.dance          = Task("dance",          actions.DanceAction(networkAccess, navigator, drone))
+Orders.distanceToHome = Task("distanceToHome", actions.GetDistanceToHome(networkAccess, navigator, drone))
+Orders.findHome       = Task("findHome",       actions.FindHomeAction(networkAccess, navigator, drone))
+Orders.fuelLevel      = Task("fuelLevel",      actions.GetFuleLevelAction(networkAccess, navigator, drone))
+Orders.hasHome        = Task("hasHome",        actions.HasHomeAction(networkAccess, navigator, drone))
+Orders.homePosition   = Task("homePosition",   actions.GetHomePositionAction(networkAccess, navigator, drone))
+Orders.ping           = Task("ping",           actions.PingAction(networkAccess, navigator, drone))
+Orders.position       = Task("position",       actions.GetPositionAction(networkAccess, navigator, drone))
+Orders.refuel         = Task("refuel",         actions.RefuelAction(networkAccess, navigator, drone))
 
 
 function WireLessCommandReceiver(network, taskRunner)
@@ -48,7 +48,7 @@ function WireLessCommandReceiver(network, taskRunner)
                 taskRunner.replaceCurrentTask(newTask.withArguments(commanderId, command))
             elseif command and string.match("abortTask", command) then
                 if taskRunner.currentTask then
-                    network.send(commanderId, "terminating-task" .. taskRunner.currentTask.name)
+                    network.send(commanderId, "terminating-task: " .. taskRunner.currentTask.name)
                     taskRunner.terminateCurrentTask()
                 else
                     network.send(commanderId, "there is no task running")
@@ -112,15 +112,15 @@ local function runtUntilLimit( _routines)
     end
 end
 
-function waitForAll( ... )
+local function waitForAll( ... )
     local routines = { create( ... ) }
     runtUntilLimit(routines)
 end
 
 -- main --
 
-taskRunner = tasks.SerialTaskRunner()
-commandReceiver = WireLessCommandReceiver(network, taskRunner)
+local taskRunner = tasks.SerialTaskRunner()
+local commandReceiver = WireLessCommandReceiver(networkAccess, taskRunner)
 
 waitForAll(function() commandReceiver.run() end, function() taskRunner.run() end)
 

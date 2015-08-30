@@ -148,8 +148,6 @@ function GetPositionAction(network, navigator)
     local self = {}
     local _network = network
     local _navigator = navigator
-    print("navigator", navigator)
-
 
     function self.execute(commanderId, message)
         print(navigator)
