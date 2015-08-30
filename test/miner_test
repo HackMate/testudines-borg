@@ -1,5 +1,0 @@
-os.loadAPI("/apis/miner")
-os.loadAPI("/apis/navigation")
-
--- Make sure the navigation controller provides the necessary implementation. --
-miner.init(navigation)

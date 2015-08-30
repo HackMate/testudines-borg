@@ -1,5 +1,4 @@
 os.loadAPI("apis/network")
-os.loadAPI("apis/miner")
 os.loadAPI("apis/navigation")
 os.loadAPI("/apis/tasks")
 os.loadAPI("/apis/cclog")
@@ -10,7 +9,6 @@ local logger = cclog.Logger("WireLessCommandReceiver")
 
 network.init()
 navigation.init(network)
-miner.init(navigation)
 local drone = drone.Drone(navigation)
 
 local Task = tasks.Task
