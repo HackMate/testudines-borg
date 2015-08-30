@@ -4,36 +4,38 @@ os.loadAPI("/apis/cclog")
 
 local logger = cclog.Logger("Navigation")
 
--- Interface of the required network-controller --
-network = {}
-function network.getGpsLocation() error("getGpsLocation must be implemented") end
+function Navigator(network, fsLibrary)
+    local self = {}
 
-fileSystem = {}
+    local fileSystem = fsLibrary or fs
+    local network = network
+    local Position = position.Position
 
-local state = {
-    file = ".navigation-home",
-    home = {
-        pos = nil
+    local logger = cclog.Logger("Navigation")
+
+    local state = {
+        file = ".navigation-home",
+        home = {
+            pos = nil
+        }
     }
-}
 
-function loadState()
-    local file = fileSystem.open(state.file, "r")
-    if file then
-        logger.info("loading home position")
-        local success, result = pcall(load("return " .. file.readAll()))
-        file.close()
-        if success and result then
-            state.home = result
-            logger.info("loaded home position %s", result.pos.tostring())
-        else
-            logger.error("could not deserialize home position %s", result)
+    function self.loadState()
+        local file = fileSystem.open(state.file, "r")
+        if file then
+            logger.info("loading home position")
+            local success, result = pcall(load("return " .. file.readAll()))
+            file.close()
+            if success and result then
+                state.home = result
+                logger.info("loaded home position %s", result.pos.tostring())
+            else
+                logger.error("could not deserialize home position %s", result)
+            end
         end
     end
 
-end
-
-function saveState()
+    function self.saveState()
         local file = fileSystem.open(state.file, "w")
         if file then
             local pos = "nil"
@@ -45,144 +47,135 @@ function saveState()
             file.write("{pos=" .. pos .. "}")
             file.close()
         else
-            logger.warn("Could not opens state file '" .. state[section].file .. "' for writing.")
-        end
-end
-
-function turnLeft()
-    turtle.turnLeft()
-end
-
-function turnAround()
-    turtle.turnRight()
-    turtle.turnRight()
-end
-
-local function seesAChest()
-    local success, details = turtle.inspect()
-    if success then
-        if string.match(string.lower(details.name), "chest") then
-            logger.info("found a chest" .. details.name)
-            return true, details.name
+            logger.warn("Could not opens state file '" .. state.file .. "' for writing.")
         end
     end
-    return false
-end
 
-local function turnTowardsChest()
-    while not seesAChest() do
-        os.sleep(2)
-        turnLeft()
-        logger.info("I am looking for a chest")
+    function self.getPosition()
+        return network.getGpsLocation()
     end
-    return true
-end
 
-function findHome()
-    logger.info("I need a chest to make this my home")
-    turnTowardsChest()
-    turnAround()
-
-    logger.info("I like this place")
-    setHome(network.getGpsLocation())
-end
-
-function setHome(pos)
-    if pos and pos.isValid() then
-        logger.info("Navigator: Setting home position " .. pos.tostring())
-        state.home.pos = pos
-        saveState()
-    else
-        error("Navigator: setHome needs a valid position")
+    function self.turnLeft()
+        turtle.turnLeft()
     end
-end
 
-function hasHome()
-    return state.home.pos ~= nil
-end
+    function self.turnAround()
+        turtle.turnRight()
+        turtle.turnRight()
+    end
 
-function isHome()
-    return state.home.pos == network.getGpsLocation()
-end
-
-function distanceToHome()
-    return position.distance(network.getGpsLocation(), state.home.pos)
-end
-
-function goHome()
-    if isHome() then
+    function self.turnTowardsChest()
+        while not self.seesAChest() do
+            os.sleep(2)
+            self.turnLeft()
+            logger.info("I am looking for a chest")
+        end
         return true
-    else
-        logger.info("Navigation: I do not know how to get home")
-        return false
     end
-end
 
-function clearHome()
-    state.home.pos = nil
-    saveState()
-    return true
-end
-
-local isNeeded = {}
-isNeeded["minecraft:torch"] = 64
-function needItem(detail)
-    return detail and isNeeded[detail.name]
-end
-
-function takeFuelFromChest()
-    local hasTakenFuel = false
-    for i=1,16,1 do
-        if not needItem(turtle.getItemDetail(i)) then
-            turtle.select(i);turtle.drop()
-            turtle.suck()
-            if utils.isFuel(turtle.getItemDetail(i)) then
-                hasTakenFuel = true
+    function self.seesAChest()
+        local success, details = turtle.inspect()
+        if success then
+            if string.match(string.lower(details.name), "chest") then
+                logger.info("found a chest" .. details.name)
+                return true, details.name
             end
         end
-    end
-    -- put everything back that are is not needed
-    for i=1,16,1 do
-        local details = turtle.getItemDetail(i)
-        if not needItem(details) and not utils.isFuel(details) then
-            turtle.select(i);turtle.drop()
-        end
-    end
-    return hasTakenFuel
-end
-
-function getFuel()
-    if isHome() and turnTowardsChest() and takeFuelFromChest() then
-        logger.info("Navigation: found fuel")
-        turnAround()
-        return true
-    else
-        logger.info("Navigation: cannot get fuel")
-        turnAround()
         return false
     end
-end
 
-function getPosition()
-    return network.getGpsLocation()
-end
-function getHomePosition()
-    if state.home.pos then
-        return state.home.pos
-    else
-        return position.Position()
+    local isNeeded = {}
+    isNeeded["minecraft:torch"] = 64
+    function self.needItem(detail)
+        return detail and isNeeded[detail.name]
     end
-end
 
-function init(networkController, fsLibrary)
-    fileSystem = fsLibrary or fs or error("could not access fs.*")
+    function self.takeFuelFromChest()
+        local hasTakenFuel = false
+        for i=1,16,1 do
+            if not self.needItem(turtle.getItemDetail(i)) then
+                turtle.select(i);turtle.drop()
+                turtle.suck()
+                if utils.isFuel(turtle.getItemDetail(i)) then
+                    hasTakenFuel = true
+                end
+            end
+        end
+        -- put everything back that are is not needed
+        for i=1,16,1 do
+            local details = turtle.getItemDetail(i)
+            if not needItem(details) and not utils.isFuel(details) then
+                turtle.select(i);turtle.drop()
+            end
+        end
+        return hasTakenFuel
+    end
 
-    for field, _ in pairs(network) do
-        if not networkController[field] then
-            error("network must implement field: " .. field .. " of type (" .. type(network[field]) .. ")")
+    function self.getFuel()
+        if self.isHome() and turnTowardsChest() and self.takeFuelFromChest() then
+            logger.info("Navigation: found fuel")
+            self.turnAround()
+            return true
+        else
+            logger.info("Navigation: cannot get fuel")
+            self.turnAround()
+            return false
         end
     end
 
-    network = networkController
-    loadState()
+    function self.findHome()
+        logger.info("I need a chest to make this my home")
+        self.turnTowardsChest()
+        self.turnAround()
+
+        logger.info("I like this place")
+        self.setHome(network.getGpsLocation())
+    end
+
+    function self.setHome(pos)
+        if pos and pos.isValid() then
+            logger.info("Navigator: Setting home position " .. pos.tostring())
+            state.home.pos = pos
+            self.saveState()
+        else
+            error("Navigator: setHome needs a valid position")
+        end
+    end
+
+    function self.hasHome()
+        return state.home.pos ~= nil
+    end
+
+    function self.distanceToHome()
+        return position.distance(network.getGpsLocation(), state.home.pos)
+    end
+
+    function self.goHome()
+        if self.isHome() then
+            return true
+        else
+            logger.info("Navigation: I do not know how to get home")
+            return false
+        end
+    end
+
+    function self.clearHome()
+        state.home.pos = nil
+        self.saveState()
+        return true
+    end
+
+    function self.getHomePosition()
+        if state.home.pos then
+            return state.home.pos
+        else
+            return Position()
+        end
+    end
+
+    function self.isHome()
+        return state.home.pos == network.getGpsLocation()
+    end
+
+    return self
 end

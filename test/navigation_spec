@@ -1,22 +1,14 @@
 os.loadAPI("/apis/navigation")
-os.loadAPI("/apis/network")
 os.loadAPI("/apis/model/position")
 
 os.loadAPI("/apis/ccspec")
 
-
-describe "navigation basic" {
-    ["init(network) should succeed "] = function()
-        expect(function() navigation.init(network) end).should_succeed()
-    end,
-    ["setHome should fail in case no input is given"] = function()
-        expect(function() navigation.setHome() end).should_fail_with_message("setHome needs a valid position")
-    end,
-}
-
 describe "navigation" {
+
     before = function()
+
         homePos = position.Position(0, 12, 0, position.North)
+        network = {}
         function network.getGpsLocation() return homePos end
 
         local fileMock = {content = nil}
@@ -36,27 +28,31 @@ describe "navigation" {
             end
         end
 
-        navigation.init(network, fsMock)
+        navigator = navigation.Navigator(network, fsMock)
 
-        navigation.setHome(homePos)
+        navigator.setHome(homePos)
+    end,
+
+    ["setHome should fail in case no input is given"] = function()
+        expect(function() navigator.setHome() end).should_fail_with_message("setHome needs a valid position")
     end,
 
     ["setHome(pos) should work"] = function()
-        navigation.setHome(homePos)
-        expect(navigation.isHome()).should_be(true)
-        expect(navigation.getHomePosition()).should_be(homePos)
-        expect(navigation.getHomePosition().facing).should_be(position.North)
+        navigator.setHome(homePos)
+        expect(navigator.isHome()).should_be(true)
+        expect(navigator.getHomePosition()).should_be(homePos)
+        expect(navigator.getHomePosition().facing).should_be(position.North)
     end,
 
     ["saveState() - loadState() should not effect isHome()"] = function()
-        navigation.saveState()
-        navigation.loadState()
-        expect(navigation.isHome()).should_be(true)
+        navigator.saveState()
+        navigator.loadState()
+        expect(navigator.isHome()).should_be(true)
     end,
 
     ["loadState() should should not effect getHomePosition()"] = function()
-        expect(navigation.getHomePosition()).should_be(homePos)
-        expect(navigation.getHomePosition().facing).should_be(position.North)
+        expect(navigator.getHomePosition()).should_be(homePos)
+        expect(navigator.getHomePosition().facing).should_be(position.North)
     end
 }
 

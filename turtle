@@ -1,5 +1,6 @@
 os.loadAPI("apis/network")
 os.loadAPI("apis/navigation")
+os.loadAPI("apis/drone")
 os.loadAPI("/apis/tasks")
 os.loadAPI("/apis/cclog")
 os.loadAPI("/apis/actions")
@@ -8,21 +9,21 @@ local logger = cclog.Logger("WireLessCommandReceiver")
 
 
 network.init()
-navigation.init(network)
-local drone = drone.Drone(navigation)
+local navigator = navigation.Navigator(network)
+local drone = drone.Drone(navigator)
 
 local Task = tasks.Task
 local Orders = {}
-Orders.clearHome      = Task("clearHome",      actions.ClearHomeAction(network, navigation, drone))
-Orders.dance          = Task("dance",          actions.DanceAction(network, navigation, drone))
-Orders.distanceToHome = Task("distanceToHome", actions.GetDistanceToHome(network, navigation, drone))
-Orders.findHome       = Task("findHome",       actions.FindHomeAction(network, navigation, drone))
-Orders.fuelLevel      = Task("fuelLevel",      actions.GetFuleLevelAction(network, navigation, drone))
-Orders.hasHome        = Task("hasHome",        actions.HasHomeAction(network, navigation, drone))
-Orders.homePosition   = Task("homePosition",   actions.GetHomePositionAction(network, navigation, drone))
-Orders.ping           = Task("ping",           actions.PingAction(network, navigation, drone))
-Orders.position       = Task("position",       actions.GetPositionAction(network, navigation, drone))
-Orders.refuel         = Task("refuel",         actions.RefuelAction(network, navigation, drone))
+Orders.clearHome      = Task("clearHome",      actions.ClearHomeAction(network, navigator, drone))
+Orders.dance          = Task("dance",          actions.DanceAction(network, navigator, drone))
+Orders.distanceToHome = Task("distanceToHome", actions.GetDistanceToHome(network, navigator, drone))
+Orders.findHome       = Task("findHome",       actions.FindHomeAction(network, navigator, drone))
+Orders.fuelLevel      = Task("fuelLevel",      actions.GetFuleLevelAction(network, navigator, drone))
+Orders.hasHome        = Task("hasHome",        actions.HasHomeAction(network, navigator, drone))
+Orders.homePosition   = Task("homePosition",   actions.GetHomePositionAction(network, navigator, drone))
+Orders.ping           = Task("ping",           actions.PingAction(network, navigator, drone))
+Orders.position       = Task("position",       actions.GetPositionAction(network, navigator, drone))
+Orders.refuel         = Task("refuel",         actions.RefuelAction(network, navigator, drone))
 
 
 function WireLessCommandReceiver(network, taskRunner)
