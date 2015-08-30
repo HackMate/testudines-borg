@@ -11,39 +11,42 @@ function network.getGpsLocation() error("getGpsLocation must be implemented") en
 fileSystem = {}
 
 local state = {
+    file = ".navigation-home",
     home = {
-        file = ".navigation-home",
         pos = nil
     }
 }
 
 function loadState()
-    for section, _  in pairs(state) do
-        local file = fileSystem.open(state[section].file, "r")
-        if file then
-            local data = file.readAll()
-            file.close()
-            state[section] = textutils.unserialize(data)
-
-            if section == "home" and state.home.pos then
-                state.home.pos = position.Position.new(state.home.pos.x, state.home.pos.y, state.home.pos.z, state.home.pos.facing)
-            end
-
+    local file = fileSystem.open(state.file, "r")
+    if file then
+        logger.info("loading home position")
+        local success, result = pcall(load("return " .. file.readAll()))
+        file.close()
+        if success and result then
+            state.home = result
+            logger.info("loaded home position %s", result.pos.tostring())
+        else
+            logger.error("could not deserialize home position %s", result)
         end
     end
+
 end
 
 function saveState()
-    for section, _ in pairs(state) do
-        local data = textutils.serialize(state[section])
-        local file = fileSystem.open(state[section].file, "w")
-        if not file then
+        local file = fileSystem.open(state.file, "w")
+        if file then
+            local pos = "nil"
+            if state.home.pos then
+                logger.error(state.home.pos.tostring())
+                pos = string.format("position.Position(%d, %d, %d, %d)",
+                    state.home.pos.x, state.home.pos.y, state.home.pos.z, state.home.pos.facing)
+            end
+            file.write("{pos=" .. pos .. "}")
+            file.close()
+        else
             logger.warn("Could not opens state file '" .. state[section].file .. "' for writing.")
         end
-        file.write(data)
-        file.close()
-
-    end
 end
 
 function turnLeft()
