@@ -26,7 +26,7 @@ function loadState()
             state[section] = textutils.unserialize(data)
 
             if section == "home" and state.home.pos then
-                state.home.pos = position.Position:new(state.home.pos.x, state.home.pos.y, state.home.pos.z, state.home.pos.facing)
+                state.home.pos = position.Position.new(state.home.pos.x, state.home.pos.y, state.home.pos.z, state.home.pos.facing)
             end
 
         end
@@ -85,9 +85,8 @@ function findHome()
 end
 
 function setHome(pos)
-    local isPosition = getmetatable(pos) == position.Position
-    if isPosition and pos:isValid() then
-        logger.info("Navigator: Setting home position " .. pos:tostring())
+    if pos and pos.isValid() then
+        logger.info("Navigator: Setting home position " .. pos.tostring())
         state.home.pos = pos
         saveState()
     else
@@ -168,7 +167,7 @@ function getHomePosition()
     if state.home.pos then
         return state.home.pos
     else
-        return position.Position:new()
+        return position.Position()
     end
 end
 

@@ -1,19 +1,10 @@
-Position = {
-    x = nil, y = nil, z = nil, facing = -1,
-    __eq = function (lhs, rhs)
-        return lhs.x == rhs.x and lhs.y == rhs.y and lhs.z == rhs.z
-    end,
-    __type = function() return "Position" end
-}
-Position.__index = Position
-
-Unknown = nil
+Unknown = -1
 North = 1
 West = 2
 South = 3
 East = 4
 
-local facing = {
+local Facing = {
     [-1] = "Unknown",
     [1] = "North",
     [2] = "West",
@@ -21,35 +12,14 @@ local facing = {
     [4] = "East",
 }
 
-function Position:new(x, y, z, facing)
-    local position = {}
-    setmetatable(position, Position)
-    position.x = x
-    position.y = y
-    position.z = z
-    position.facing = facing
-    return position
-end
-
-function Position:isValid()
-    return self.x ~= nil and self.y ~= nil and self.z ~= nil and self.facing ~= nil
-end
-
-function Position:tostring()
-    if self:isValid() then
-        return self.x .. ", " .. self.y .. ", " .. self.z .. ", " .. facing[self.facing]
-    else
-        return "invalid-position"
-    end
-end
 
 local function isPosition(pos)
-    return getmetatable(pos) == position.Position
+    return pos.x and pos.y and pos.z
 end
 
 function distance(pos1, pos2)
     local arePositions = isPosition(pos1) and isPosition(pos2)
-    if arePositions and pos1:isValid() and pos2:isValid() then
+    if arePositions and pos1.isValid() and pos2.isValid() then
         local xd, yd, zd = pos1.x - pos2.x, pos1.y - pos2.y, pos1.z - pos2.z
         return math.sqrt(xd*xd + yd*yd + zd*zd)
     else
@@ -57,14 +27,42 @@ function distance(pos1, pos2)
     end
 end
 
-function Position:setOrientation(nextPos)
-    if isPosition(nextPos) and nextPos:isValid() then
-        local xd, _, zd = self.x - nextPos.x, self.y - nextPos.y, self.z - nextPos.z
-        local heading = ((xd + math.abs(xd) * 2) + (zd + math.abs(zd) * 3))
-        if facing[heading] ~= nil then
-            self.facing = heading
+local positionMetaTable = {
+    __eq = function (lhs, rhs)
+        return lhs.x == rhs.x and lhs.y == rhs.y and lhs.z == rhs.z
+    end,
+}
+
+function Position(x, y, z, facing)
+    local self = {x = x, y = y, z = z, facing = facing or Unknown}
+
+    setmetatable(self, positionMetaTable)
+
+    function self.isValid()
+        return self.x ~= nil and self.y ~= nil and self.z ~= nil
+    end
+
+    function self.tostring()
+        if self.isValid() then
+            return self.x .. ", " .. self.y .. ", " .. self.z .. ", " .. Facing[self.facing]
+        else
+            return "invalid-position"
         end
     end
+
+    function self.setOrientation(nextPos)
+        if isPosition(nextPos) and nextPos.isValid() then
+            local xd, _, zd = self.x - nextPos.x, self.y - nextPos.y, self.z - nextPos.z
+            local heading = ((xd + math.abs(xd) * 2) + (zd + math.abs(zd) * 3))
+            if Facing[heading] ~= nil then
+                self.facing = heading
+            end
+        end
+        return self
+    end
+
     return self
 end
+
+
 

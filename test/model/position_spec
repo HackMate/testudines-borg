@@ -7,12 +7,12 @@ local North = position.North
 describe "Position" {
 
     ["new() should return an invalid position"] = function()
-        expect(Position:new():isValid()).should_not_be(true)
+        expect(Position().isValid()).should_not_be(true)
     end,
 
     ["new(10, 12, 123, North) should build a valid position"] = function()
-        local position = Position:new(10, 12, 123, North)
-        expect(position:isValid()).should_be(true)
+        local position = Position(10, 12, 123, North)
+        expect(position.isValid()).should_be(true)
         expect(position.x).should_be(10)
         expect(position.y).should_be(12)
         expect(position.z).should_be(123)
@@ -20,24 +20,24 @@ describe "Position" {
     end,
 
     ["new() should not be comparable to a valid Position"] = function()
-        expect(Position:new() == Position:new(0,0,0, North)).should_not_be(true)
+        expect(Position() == Position(0,0,0, North)).should_not_be(true)
     end,
 
-    ["position:tostring() should convert the position to a readable string"] = function()
-        expect(Position:new(12, 12, 13, North):tostring()).should_be("12, 12, 13, North")
+    ["position.tostring() should convert the position to a readable string"] = function()
+        expect(Position(12, 12, 13, North).tostring()).should_be("12, 12, 13, North")
     end,
 
-    ["position:tostring() should include an unknown facing"] = function()
-        expect(Position:new(12, 100, 13):tostring()).should_be("12, 100, 13, Unknown")
+    ["position.tostring() should include an unknown facing"] = function()
+        expect(Position(12, 100, 13).tostring()).should_be("12, 100, 13, Unknown")
     end,
 }
 
 describe "Position == Position" {
 
     before = function ()
-        pos1 = Position:new(0, 0, 0, position.North)
-        pos2 = Position:new(0, 0, 1, position.North)
-        pos3 = position.Position:new(0, 0, 0, position.Unknown)
+        pos1 = Position(0, 0, 0, position.North)
+        pos2 = Position(0, 0, 1, position.North)
+        pos3 = position.Position(0, 0, 0, position.Unknown)
     end,
 
     ["should not be eual for two differing positions"] = function()
@@ -59,16 +59,16 @@ local distance = position.distance
 describe "Positon.distance()" {
 
     ["should be 0 between two equal points"] = function()
-        expect(distance(Position:new(0, 0, 0), Position:new(0, 0, 0))).should_be(0)
+        expect(distance(Position(0, 0, 0), Position(0, 0, 0))).should_be(0)
     end,
 
     ["should be correct between two points"] = function()
-        expect(distance(Position:new(0, 0, 0), Position:new(0, 0, 10))).should_be(10)
+        expect(distance(Position(0, 0, 0), Position(0, 0, 10))).should_be(10)
 
     end,
 
     ["should be huge between an invalid and invalid position"] = function()
-        expect(distance(Position:new(0, 0, 0), position.Position:new())).should_be(math.huge)
+        expect(distance(Position(0, 0, 0), position.Position())).should_be(math.huge)
     end,
 
 }
@@ -77,26 +77,26 @@ local West = position.West
 local East = position.East
 local North = position.North
 local South = position.South
-describe "Position:setOrientation(pos)" {
+describe "Position.setOrientation(pos)" {
 
     before = function()
-        pos = Position:new(0, 0, 0)
+        pos = Position(0, 0, 0)
     end,
 
     ["should detect West movement"] = function()
-        expect(pos:setOrientation(Position:new(0, 0, 1)).facing).should_be(West)
+        expect(pos.setOrientation(Position(0, 0, 1)).facing).should_be(West)
     end,
 
     ["should detect East movement"] = function()
-        expect(pos:setOrientation(Position:new(0, 0, -1)).facing).should_be(East)
+        expect(pos.setOrientation(Position(0, 0, -1)).facing).should_be(East)
     end,
 
     ["should detect North movement"] = function()
-        expect(pos:setOrientation(Position:new(1, 0, 0)).facing).should_be(North)
+        expect(pos.setOrientation(Position(1, 0, 0)).facing).should_be(North)
     end,
 
     ["should detect South movement"] = function()
-        expect(pos:setOrientation(Position:new(-1, 0, 0)).facing).should_be(South)
+        expect(pos.setOrientation(Position(-1, 0, 0)).facing).should_be(South)
     end,
 
 }

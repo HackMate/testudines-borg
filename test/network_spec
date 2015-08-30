@@ -6,12 +6,12 @@ describe "network.getGpsLocation" {
 
     ["should return a valid Position"] = function()
         function gps.locate() return 10, 12, 13 end
-        expect(network.getGpsLocation()).should_be(position.Position:new(10, 12, 13))
+        expect(network.getGpsLocation()).should_be(position.Position(10, 12, 13))
     end,
 
     ["should return an invalid Position in case the gps fails"] = function()
         function gps.locate() return nil end
-        expect(network.getGpsLocation():isValid()).should_be(false)
+        expect(network.getGpsLocation().isValid()).should_be(false)
     end
 
 }

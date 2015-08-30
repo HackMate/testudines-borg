@@ -53,9 +53,9 @@ end
 function getGpsLocation()
     local x, y, z = gps.locate()
     if x then
-        return position.Position:new(x, y, z)
+        return position.Position(x, y, z)
     else
-        return position.Position:new()
+        return position.Position()
     end
 end
 
