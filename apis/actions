@@ -25,7 +25,7 @@ function DanceAction(network, navigator, drone)
     local logger = cclog.Logger("DanceAction")
 
     function self.execute(commanderId, _)
-        if drone.needsFuel() then
+        if navigator.needsFuel() and navigator.hasHome() then
             logger.info("need-fuel, cannot dance without some juice")
             network.send(commanderId, "need-fuel, cannot dance without some juice")
             return true
@@ -36,9 +36,11 @@ function DanceAction(network, navigator, drone)
         end
         logger.info("let's dance")
         network.send(commanderId, "will dance")
-        drone.forward()
-        drone.forward()
-        for i=1,2,1 do
+
+        while true do
+            drone.forward()
+            drone.forward()
+
             drone.up()
             drone.up()
             drone.forward()
@@ -54,10 +56,11 @@ function DanceAction(network, navigator, drone)
             drone.back()
             drone.turnRight()
             drone.down()
+            drone.back()
+
+            drone.back()
             drone.back()
         end
-        drone.back()
-        drone.back()
 
         return true
     end

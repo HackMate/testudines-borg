@@ -1,17 +1,15 @@
 os.loadAPI("/apis/model/position")
 os.loadAPI("/apis/utils")
 os.loadAPI("/apis/cclog")
+os.loadAPI("/apis/ccoop")
 
 local logger = cclog.Logger("Navigation")
 
-function Navigator(network, fsLibrary)
+function HomeNavigator(network, drone, fileSystem)
     local self = {}
 
-    local fileSystem = fsLibrary or fs
     local network = network
-    local Position = position.Position
-
-    local logger = cclog.Logger("Navigation")
+    local logger = cclog.Logger("HomeNavigator")
 
     local state = {
         file = ".navigation-home",
@@ -40,7 +38,6 @@ function Navigator(network, fsLibrary)
         if file then
             local pos = "nil"
             if state.home.pos then
-                logger.error(state.home.pos.tostring())
                 pos = string.format("position.Position(%d, %d, %d, %d)",
                     state.home.pos.x, state.home.pos.y, state.home.pos.z, state.home.pos.facing)
             end
@@ -51,30 +48,22 @@ function Navigator(network, fsLibrary)
         end
     end
 
-    function self.getPosition()
-        return network.getGpsLocation()
-    end
-
-    function self.turnLeft()
-        turtle.turnLeft()
-    end
-
     function self.turnAround()
-        turtle.turnRight()
-        turtle.turnRight()
+        drone.turnRight()
+        drone.turnRight()
     end
 
     function self.turnTowardsChest()
         while not self.seesAChest() do
             os.sleep(2)
-            self.turnLeft()
+            drone.turnLeft()
             logger.info("I am looking for a chest")
         end
         return true
     end
 
     function self.seesAChest()
-        local success, details = turtle.inspect()
+        local success, details = drone.inspect()
         if success then
             if string.match(string.lower(details.name), "chest") then
                 logger.info("found a chest" .. details.name)
@@ -87,32 +76,32 @@ function Navigator(network, fsLibrary)
     local isNeeded = {}
     isNeeded["minecraft:torch"] = 64
     function self.needItem(detail)
-        return detail and isNeeded[detail.name]
+        return detail and self.isNeeded[detail.name]
     end
 
     function self.takeFuelFromChest()
         local hasTakenFuel = false
         for i=1,16,1 do
-            if not self.needItem(turtle.getItemDetail(i)) then
-                turtle.select(i);turtle.drop()
-                turtle.suck()
-                if utils.isFuel(turtle.getItemDetail(i)) then
+            if not self.needItem(drone.getItemDetail(i)) then
+                drone.select(i);drone.drop()
+                drone.suck()
+                if utils.isFuel(drone.getItemDetail(i)) then
                     hasTakenFuel = true
                 end
             end
         end
         -- put everything back that are is not needed
         for i=1,16,1 do
-            local details = turtle.getItemDetail(i)
-            if not needItem(details) and not utils.isFuel(details) then
-                turtle.select(i);turtle.drop()
+            local details = drone.getItemDetail(i)
+            if not self.needItem(details) and not utils.isFuel(details) then
+                drone.select(i);drone.drop()
             end
         end
         return hasTakenFuel
     end
 
     function self.getFuel()
-        if self.isHome() and turnTowardsChest() and self.takeFuelFromChest() then
+        if self.isHome() and self.turnTowardsChest() and self.takeFuelFromChest() then
             logger.info("Navigation: found fuel")
             self.turnAround()
             return true
@@ -138,7 +127,7 @@ function Navigator(network, fsLibrary)
             state.home.pos = pos
             self.saveState()
         else
-            error("Navigator: setHome needs a valid position")
+            logger.error("setHome needs a valid position")
         end
     end
 
@@ -148,15 +137,6 @@ function Navigator(network, fsLibrary)
 
     function self.distanceToHome()
         return position.distance(network.getGpsLocation(), state.home.pos)
-    end
-
-    function self.goHome()
-        if self.isHome() then
-            return true
-        else
-            logger.info("Navigation: I do not know how to get home")
-            return false
-        end
     end
 
     function self.clearHome()
@@ -169,13 +149,44 @@ function Navigator(network, fsLibrary)
         if state.home.pos then
             return state.home.pos
         else
-            return Position()
+            return position.Position()
         end
     end
 
     function self.isHome()
         return state.home.pos == network.getGpsLocation()
     end
+
+    self.loadState()
+
+    return self
+end
+
+function Navigator(network, drone)
+    local _homeNavigator = HomeNavigator(network, drone, fs)
+    local self, super = extend(_homeNavigator)
+    local logger = cclog.Logger("Navigation")
+
+    function self.getPosition()
+        return network.getGpsLocation()
+    end
+
+    function self.goHome()
+        if self.isHome() then
+            return true
+        else
+            logger.info("Navigation: I do not know how to get home")
+            return false
+        end
+    end
+
+    function self.needsFuel()
+        local distanceToHome = super.distanceToHome()
+        local fuelLevel = drone.getFuelLevel()
+        logger.info("I have %d fuel and have a distance to home of %s", fuelLevel, distanceToHome)
+        return fuelLevel < distanceToHome * 2 or distanceToHome == 0 and fuelLevel < 100
+    end
+
 
     return self
 end

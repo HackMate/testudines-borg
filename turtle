@@ -9,8 +9,8 @@ local logger = cclog.Logger("WireLessCommandReceiver")
 
 
 local networkAccess = network.Network()
-local navigator = navigation.Navigator(networkAccess)
-local drone = drone.Drone(navigator)
+local drone = drone.Drone()
+local navigator = navigation.Navigator(networkAccess, drone)
 
 local Task = tasks.Task
 local Orders = {}
@@ -82,7 +82,7 @@ local function runtUntilLimit( _routines)
     while true do
         local reboot = eventData[1] == "rednet_message" and eventData[3] == "reboot"
         if reboot then
-            network.send(eventData[2], "Forcing shutdown")
+            networkAccess.send(eventData[2], "Forcing shutdown")
             eventData = {"terminate"}
         end
 

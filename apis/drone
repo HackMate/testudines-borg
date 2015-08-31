@@ -98,10 +98,9 @@ local function InspectorHandler()
     return self
 end
 
-local function MovementHandler(navigator)
+local function MovementHandler()
     local self = {}
 
-    local navigator = navigator
     local state = {fuelLevel = 0}
     local logger = cclog.Logger("MovementHandler")
 
@@ -118,19 +117,12 @@ local function MovementHandler(navigator)
     end
     function self.getFuelLimit() return turtleAPI.getFuelLimit() end
 
-    function self.needsFuel()
-        local distanceToHome = navigator.distanceToHome()
-        local fuelLevel = self.getFuelLevel()
-        logger.info("I have %d fuel and have a distance to home of %s", fuelLevel, distanceToHome)
-        return fuelLevel < distanceToHome * 2 or distanceToHome == 0 and fuelLevel < 100
-    end
-
     return self
 end
 
 
-function Drone(navigator)
-    local _movementHandler = MovementHandler(navigator)
+function Drone()
+    local _movementHandler = MovementHandler()
     local _inspectorHandler = InspectorHandler()
     local _inventoryHandler = InventoryHandler()
     local _attackHandler = AttackHandler()

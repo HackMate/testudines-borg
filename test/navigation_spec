@@ -3,7 +3,7 @@ os.loadAPI("/apis/model/position")
 
 os.loadAPI("/apis/ccspec")
 
-describe "navigation" {
+describe "HomeNavigator" {
 
     before = function()
 
@@ -28,31 +28,31 @@ describe "navigation" {
             end
         end
 
-        navigator = navigation.Navigator(network, fsMock)
+        homeNavigator = navigation.HomeNavigator(network, {}, fsMock)
 
-        navigator.setHome(homePos)
+        homeNavigator.setHome(homePos)
     end,
 
     ["setHome should fail in case no input is given"] = function()
-        expect(function() navigator.setHome() end).should_fail_with_message("setHome needs a valid position")
+        expect(function() homeNavigator.setHome() end).should_fail_with_message("setHome needs a valid position")
     end,
 
     ["setHome(pos) should work"] = function()
-        navigator.setHome(homePos)
-        expect(navigator.isHome()).should_be(true)
-        expect(navigator.getHomePosition()).should_be(homePos)
-        expect(navigator.getHomePosition().facing).should_be(position.North)
+        homeNavigator.setHome(homePos)
+        expect(homeNavigator.isHome()).should_be(true)
+        expect(homeNavigator.getHomePosition()).should_be(homePos)
+        expect(homeNavigator.getHomePosition().facing).should_be(position.North)
     end,
 
     ["saveState() - loadState() should not effect isHome()"] = function()
-        navigator.saveState()
-        navigator.loadState()
-        expect(navigator.isHome()).should_be(true)
+        homeNavigator.saveState()
+        homeNavigator.loadState()
+        expect(homeNavigator.isHome()).should_be(true)
     end,
 
     ["loadState() should should not effect getHomePosition()"] = function()
-        expect(navigator.getHomePosition()).should_be(homePos)
-        expect(navigator.getHomePosition().facing).should_be(position.North)
+        expect(homeNavigator.getHomePosition()).should_be(homePos)
+        expect(homeNavigator.getHomePosition().facing).should_be(position.North)
     end
 }
 
