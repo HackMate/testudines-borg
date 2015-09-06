@@ -11,18 +11,6 @@ function isFuel(detail)
     end
 end
 
-function writeFile(fileName, data, fsApi)
-    local fsApi = fsApi or fs
-
-    local file = fsApi.open(fileName, "w")
-    if file then
-        file:write(data)
-        file:close()
-        return true
-    end
-    return false
-end
-
 -- Helper that allows the serialization of values. All they need to do is implement __serialize
 -- and provide that function through their metatable. This way the table can be deserialized
 -- through load(..).
