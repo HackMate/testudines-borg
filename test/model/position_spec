@@ -84,20 +84,20 @@ describe "Position.setOrientation(pos)" {
         pos = Position(0, 0, 0)
     end,
 
-    ["should detect West movement"] = function()
-        expect(pos.setOrientation(Position(0, 0, 1)).facing).should_be(West)
-    end,
-
-    ["should detect East movement"] = function()
-        expect(pos.setOrientation(Position(0, 0, -1)).facing).should_be(East)
+    ["should detect South movement"] = function()
+        expect(pos.setOrientation(Position(0, 0, 1)).facing).should_be(South)
     end,
 
     ["should detect North movement"] = function()
-        expect(pos.setOrientation(Position(1, 0, 0)).facing).should_be(North)
+        expect(pos.setOrientation(Position(0, 0, -1)).facing).should_be(North)
     end,
 
-    ["should detect South movement"] = function()
-        expect(pos.setOrientation(Position(-1, 0, 0)).facing).should_be(South)
+    ["should detect East movement"] = function()
+        expect(pos.setOrientation(Position(1, 0, 0)).facing).should_be(East)
+    end,
+
+    ["should detect West movement"] = function()
+        expect(pos.setOrientation(Position(-1, 0, 0)).facing).should_be(West)
     end,
 
 }

@@ -1,3 +1,5 @@
+os.loadAPI("/apis/network")
+
 arg = {...}
 
 local PROTOCOL = "hub01"
@@ -16,8 +18,8 @@ function sendCommand()
 end
 
 -- main --
-rednetcontroller.openConnection()
+local networkAccess = network.Network()
 
 parallel.waitForAll(receive, sendCommand)  -- Run both functions in parallel and wait until both of them completes.
 
-rednetcontroller.closeConnection()
+networkAccess.closeConnection()

@@ -22,9 +22,10 @@ Orders.fuelLevel      = Task("fuelLevel",      actions.GetFuleLevelAction(networ
 Orders.hasHome        = Task("hasHome",        actions.HasHomeAction(networkAccess, navigator, drone))
 Orders.homePosition   = Task("homePosition",   actions.GetHomePositionAction(networkAccess, navigator, drone))
 Orders.ping           = Task("ping",           actions.PingAction(networkAccess, navigator, drone))
+Orders.gpsPosition    = Task("gpsPosition",    actions.GetGpsPositionAction(networkAccess, navigator, drone))
 Orders.position       = Task("position",       actions.GetPositionAction(networkAccess, navigator, drone))
 Orders.refuel         = Task("refuel",         actions.RefuelAction(networkAccess, navigator, drone))
-
+Orders.calibrate      = Task("calibrate",      actions.CalibrateFacingAction(networkAccess, navigator, drone))
 
 function WireLessCommandReceiver(network, taskRunner)
     local self = {}

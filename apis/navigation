@@ -19,28 +19,20 @@ function HomeNavigator(network, drone, fileSystem)
     }
 
     function self.loadState()
-        local file = fileSystem.open(state.file, "r")
-        if file then
-            logger.info("loading home position")
-            local success, result = utils.deserializeTable(file.readAll())
-            file.close()
-            if success then
-                state = result
-                logger.info("loaded home position %s", state.home.pos.tostring())
-            else
-                state.home.pos = nil
-                logger.error("could not deserialize home position %s", result)
-            end
+        local success, result = utils.loadTable(state.file, fileSystem)
+        if success then
+            state = result
+            logger.info("loaded home position %s", state.home.pos.tostring())
+        else
+            state.home.pos = nil
+            logger.error("could not deserialize home position %s", result)
         end
     end
 
     function self.saveState()
-        local file = fileSystem.open(state.file, "w")
-        if file then
-            file.write(utils.serializeTable(state))
-            file.close()
-        else
-            logger.warn("Could not opens state file '" .. state.file .. "' for writing.")
+        local success, message = utils.saveTable(state.file, state, fileSystem)
+        if not success then
+            logger.warn("Could not save state '" .. message .. "'")
         end
     end
 
@@ -114,7 +106,9 @@ function HomeNavigator(network, drone, fileSystem)
         self.turnAround()
 
         logger.info("I like this place")
-        self.setHome(network.getGpsLocation())
+        local pos = network.getGpsLocation()
+        self.setHome(pos)
+        drone.setPosition(pos)
     end
 
     function self.setHome(pos)
@@ -173,6 +167,20 @@ function Navigator(network, drone)
         else
             logger.info("Navigation: I do not know how to get home")
             return false
+        end
+    end
+
+    function self.calibrateFacing()
+        logger.info("calibrating")
+        local pos = self.getPosition()
+        if pos.facing == position.Unknown and drone.forward() then
+            local newPosition = self.getPosition()
+            logger.info("old-positon: %s new-position: %s", pos.tostring(), newPosition.tostring())
+            if newPosition and newPosition.isValid() then
+                pos.setOrientation(newPosition)
+                drone.setPosition(pos)
+            end
+            drone.back()
         end
     end
 

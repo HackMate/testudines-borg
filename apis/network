@@ -56,10 +56,11 @@ function Network()
     end
 
     function self.getGpsLocation()
-        local x, y, z = gps.locate()
+        local x, y, z = gps.locate(5, true)
         if x then
             return position.Position(x, y, z)
         else
+            logger.warn("could not obtain position from gps")
             return position.Position()
         end
     end

@@ -87,7 +87,7 @@ function SerialTaskRunner()
                     currentFilter == eventData[1] or
                     eventData[1] == "terminate") then
 
-                logger.info("Resuming task")
+                logger.debug("Resuming task")
                 local ok, param = coroutine.resume(self.currentTask.routine, table.unpack(eventData))
                 if not ok then
                     logger.info("task (%s) failed: %s ", self.currentTask.name, param)

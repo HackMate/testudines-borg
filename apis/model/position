@@ -1,15 +1,15 @@
 Unknown = -1
-North = 1
-West = 2
-South = 3
-East = 4
+East = 1
+South = 2
+West = 3
+North = 4
 
 local Facing = {
     [-1] = "Unknown",
-    [1] = "North",
-    [2] = "West",
-    [3] = "South",
-    [4] = "East",
+    [1] = "East",
+    [2] = "South",
+    [3] = "West",
+    [4] = "North",
 }
 
 

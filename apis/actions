@@ -147,14 +147,36 @@ function PingAction(network)
     return self
 end
 
-function GetPositionAction(network, navigator)
+function GetGpsPositionAction(network)
     local self = {}
-    local _network = network
-    local _navigator = navigator
+    local logger = cclog.Logger("GetGpsPositionAction")
 
-    function self.execute(commanderId, message)
-        print(navigator)
-        network.send(commanderId, "position: " .. navigator.getPosition().tostring())
+    function self.execute(commanderId, _)
+        local pos = network.getGpsLocation()
+        logger.info("obtained gpsLocation %s", pos.tostring())
+        network.send(commanderId, "gpsPosition: " .. pos.tostring())
+    end
+
+    return self
+end
+
+function GetPositionAction(network, _, drone)
+    local self = {}
+
+    function self.execute(commanderId, _)
+        network.send(commanderId, "position: " .. drone.getPosition().tostring())
+    end
+
+    return self
+end
+
+
+function CalibrateFacingAction(network, navigator, drone)
+    local self = {}
+
+    function self.execute(commanderId, _)
+        navigator.calibrateFacing()
+        network.send(commanderId, "adjusted facing: " .. drone.getPosition().tostring())
     end
 
     return self

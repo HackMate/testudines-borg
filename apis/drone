@@ -99,10 +99,28 @@ local function InspectorHandler()
 end
 
 local function MovementHandler()
-    local self = {}
-
-    local state = {fuelLevel = 0}
     local logger = cclog.Logger("MovementHandler")
+
+    local self = {}
+    local stateFile = ".drone-navigation"
+    local state = {fuelLevel = 0, position = position.Position()}
+
+    local function loadState()
+        local success, result = utils.loadTable(stateFile)
+        if success then
+            state = result
+            logger.info("loaded position %s", state.position.tostring())
+        else
+            logger.error("could not deserialize home position %s", result)
+        end
+    end
+
+    local function saveState()
+        local success, message = utils.saveTable(stateFile, state)
+        if not success then
+            logger.warn("Could not save state '" .. message .. "'")
+        end
+    end
 
     function self.turnLeft() return turtleAPI.turnLeft() end
     function self.turnRight() return turtleAPI.turnRight() end
@@ -110,12 +128,29 @@ local function MovementHandler()
     function self.back() return turtleAPI.back() end
     function self.up() return turtleAPI.up() end
     function self.down() return turtleAPI.down() end
+
+    function self.turnAround()
+        self.turnLeft()
+        self.turnLeft()
+    end
+
     function self.refuel(quantity) return turtleAPI.refuel(quantity) end
     function self.getFuelLevel()
         state.fuelLevel = turtleAPI.getFuelLevel()
         return state.fuelLevel
     end
     function self.getFuelLimit() return turtleAPI.getFuelLimit() end
+
+    function self.getPosition()
+        return state.position
+    end
+
+    function self.setPosition(pos)
+        state.position = pos
+        saveState()
+    end
+
+    loadState()
 
     return self
 end

@@ -23,19 +23,6 @@ function writeFile(fileName, data, fsApi)
     return false
 end
 
-function saveTable(table, fileName)
-    local shallowCopy = {}
-    for key, value in pairs(table) do
-        if type(key) ~= "function" then
-            shallowCopy[key] = value
-        elseif value.__serialize then
-            shallowCopy[key] = value.__serialize()
-        end
-    end
-
-    return writeFile(textutils.serialize(shallowCopy), fileName, fsApi)
-end
-
 -- Helper that allows the serialization of values. All they need to do is implement __serialize
 -- and provide that function through their metatable. This way the table can be deserialized
 -- through load(..).
@@ -66,6 +53,30 @@ function deserializeTable(data)
         end
     else
         return false
+    end
+end
+
+function loadTable(fileName, fileSystem)
+    local fileSystem = fileSystem or fs
+    local file = fileSystem.open(fileName, "r")
+    if file then
+        local success, result = deserializeTable(file.readAll())
+        file.close()
+        return success, result
+    else
+        return false, "could not open file" .. fileName
+    end
+end
+
+function saveTable(fileName, table, fileSystem)
+    local fileSystem = fileSystem or fs
+    local file = fileSystem.open(fileName, "w")
+    if file then
+        file.write(utils.serializeTable(table))
+        file.close()
+        return true
+    else
+        return false, "Could not open file '" .. fileName .. "' for writing."
     end
 end
 
