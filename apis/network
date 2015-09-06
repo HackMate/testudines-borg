@@ -51,8 +51,8 @@ function Network()
         end
     end
 
-    function self.receive(filter, timeout)
-        return rednet.receive(filter, timeout, PROTOCOL)
+    function self.receive(timeout)
+        return rednet.receive(PROTOCOL, timeout)
     end
 
     function self.getGpsLocation()

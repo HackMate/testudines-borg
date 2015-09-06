@@ -1,7 +1,9 @@
 arg = {...}
 
+local PROTOCOL = "hub01"
+
 function receive()
-    local id, message = rednet.receive(2)
+    local id, message = rednet.receive(PROTOCOL, 2)
     if id then
         print(id .. ": " .. message)
     else
@@ -10,7 +12,7 @@ function receive()
 end
 
 function sendCommand()
-    rednet.broadcast(arg[1])
+    rednet.broadcast(arg[1], PROTOCOL)
 end
 
 -- main --
