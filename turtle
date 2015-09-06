@@ -33,7 +33,7 @@ function WireLessCommandReceiver(network, taskRunner)
 
     local function receiveOrder()
         logger.info("Awaiting orders")
-        local id, orderName = network.receive(10)
+        local id, orderName = network.receive()
         logger.info("Received order %s", orderName)
         return Orders[orderName], id, orderName
     end
@@ -46,7 +46,7 @@ function WireLessCommandReceiver(network, taskRunner)
 
             if newTask then
                 taskRunner.replaceCurrentTask(newTask.withArguments(commanderId, command))
-            elseif command and string.match("abortTask", command) then
+            elseif command == "abortTask" then
                 if taskRunner.currentTask then
                     network.send(commanderId, "terminating-task: " .. taskRunner.currentTask.name)
                     taskRunner.terminateCurrentTask()

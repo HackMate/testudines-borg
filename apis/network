@@ -3,6 +3,8 @@ os.loadAPI("/apis/cclog")
 
 local logger = cclog.Logger("Network")
 
+local PROTOCOL = "hub01"
+
 function Network()
     local self = {}
 
@@ -45,12 +47,12 @@ function Network()
 
     function self.send(id, message)
         if id then
-            return rednet.send(id, message)
+            return rednet.send(id, message, PROTOCOL)
         end
     end
 
     function self.receive(filter, timeout)
-        return rednet.receive(filter, timeout)
+        return rednet.receive(filter, timeout, PROTOCOL)
     end
 
     function self.getGpsLocation()
