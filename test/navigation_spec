@@ -11,7 +11,7 @@ describe "HomeNavigator" {
         network = {}
         function network.getGpsLocation() return homePos end
 
-        local fileMock = {content = nil}
+        fileMock = {content = nil}
         function fileMock.write(value)
             fileMock.content = value
         end
@@ -45,7 +45,6 @@ describe "HomeNavigator" {
     end,
 
     ["saveState() - loadState() should not effect isHome()"] = function()
-        homeNavigator.setHome(homePos)
         homeNavigator.saveState()
         homeNavigator.loadState()
         expect(homeNavigator.isHome()).should_be(true)

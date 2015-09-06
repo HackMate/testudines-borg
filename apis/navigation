@@ -22,12 +22,13 @@ function HomeNavigator(network, drone, fileSystem)
         local file = fileSystem.open(state.file, "r")
         if file then
             logger.info("loading home position")
-            local result = position.deserialize(file.readAll())
+            local success, result = utils.deserializeTable(file.readAll())
             file.close()
-            if result.pos then
-                state.home = result.pos
-                logger.info("loaded home position %s", result.pos.tostring())
+            if success then
+                state = result
+                logger.info("loaded home position %s", state.home.pos.tostring())
             else
+                state.home.pos = nil
                 logger.error("could not deserialize home position %s", result)
             end
         end
@@ -36,11 +37,7 @@ function HomeNavigator(network, drone, fileSystem)
     function self.saveState()
         local file = fileSystem.open(state.file, "w")
         if file then
-            local pos = "nil"
-            if state.home.pos then
-                pos = position.serialize(state.home.pos)
-            end
-            file.write("{pos=" .. pos .. "}")
+            file.write(utils.serializeTable(state))
             file.close()
         else
             logger.warn("Could not opens state file '" .. state.file .. "' for writing.")

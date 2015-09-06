@@ -27,31 +27,22 @@ function distance(pos1, pos2)
     end
 end
 
-function serialize(pos)
-    if not isPosition(pos) then
-        error("serialize(pos) needs a valid position")
-    end
-
-    if pos.isValid() then
-        return string.format("position.Position(%s)",
-            pos.tostring())
-    else
-        return "{}"
-    end
-
-end
-
-function deserialize(serializedPos)
-    if serializedPos == "{}" then
-        serializedPos = "position.Position()"
-    end
-    local _, value = pcall(load("return " .. serializedPos))
-    return isPosition(value) and value or Position()
-end
-
 local positionMetaTable = {
     __eq = function (lhs, rhs)
         return lhs.x == rhs.x and lhs.y == rhs.y and lhs.z == rhs.z
+    end,
+
+    __serialize = function(pos)
+        if not isPosition(pos) then
+            error("serialize(pos) needs a valid position")
+        end
+
+        if pos.isValid() then
+            return string.format("position.Position(%s)",
+                pos.tostring())
+        else
+            return "position.Position()"
+        end
     end,
 }
 

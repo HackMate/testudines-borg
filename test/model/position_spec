@@ -1,5 +1,6 @@
 os.loadAPI("/apis/model/position")
 os.loadAPI("/apis/ccspec")
+os.loadAPI("/apis/utils")
 
 local Position = position.Position
 local North = position.North
@@ -101,25 +102,34 @@ describe "Position.setOrientation(pos)" {
 
 }
 
-local serialize = position.serialize
-local deserialize = position.deserialize
-
 describe "Position serialized" {
 
-    ["should serialize a valid position"] = function()
-        expect(serialize(Position(1,2,3, North))).should_be("position.Position(1, 2, 3, position.North)")
+    ["should serialize a valid position within a table"] = function()
+        local table = {pos=Position(1,2,3, North)}
+        expect(utils.serializeTable(table)).should_be("{pos=position.Position(1, 2, 3, position.North),}")
     end,
 
-    ["should deserialize a valid position"] = function()
-        expect(serialize(Position())).should_be("{}")
+    ["should serialize an invalid position within a table"] = function()
+        local table = {pos=Position()}
+        expect(utils.serializeTable(table)).should_be("{pos=position.Position(),}")
     end,
 
     ["should serialize a valid position"] = function()
-        expect(deserialize("position.Position(1, 2, 3, position.North)")).should_be(Position(1,2,3, North))
+        local value = "{pos=position.Position(1, 2, 3, position.North),}"
+
+        local success, result = utils.deserializeTable(value)
+
+        expect(success).should_be(true)
+        expect(result.pos).should_be(Position(1,2,3, North))
     end,
 
     ["should deserialize an invalid position"] = function()
-        expect(deserialize("{}")).should_be(Position())
+        local value = "{pos=position.Position(),}"
+
+        local success, result = utils.deserializeTable(value)
+
+        expect(success).should_be(true)
+        expect(result.pos.isValid()).should_be(false)
     end,
 
 }

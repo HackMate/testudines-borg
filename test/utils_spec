@@ -23,4 +23,49 @@ describe "utils.IsFuel" {
     end
 }
 
+describe "utils.serializeTable()" {
+
+    ["serializeTable() should ignore functions"] = function()
+        expect(utils.serializeTable({pos="test", test=function() end}))
+            .should_be("{pos=\"test\",}")
+    end,
+
+    ["serializeTable() should handle nested tables"] = function()
+        local testTable = { pos ="test", test = function() end, nested = { name = "table" }}
+        expect(utils.serializeTable(testTable))
+            .should_be("{nested={name=\"table\",},pos=\"test\",}")
+    end,
+
+    ["serializeTable() should handle values that implement __serialize"] = function()
+        local testMetaTable = {__serialize = function() return "serialized" end }
+        local testValue = {}
+        setmetatable(testValue, testMetaTable)
+        local testTable = {test = "test", testValue = testValue }
+
+        expect(utils.serializeTable(testTable))
+            .should_be('{test="test",testValue=serialized,}')
+    end,
+
+}
+
+describe "utils.serialize" {
+
+    ["serialize(data) should return false for a nil value"] = function()
+        expect(utils.deserializeTable(nil)).should_be(false)
+    end,
+
+    ["serialize(data) should return two values in case of failure"] = function()
+        local success, message = utils.deserializeTable('error("fail")')
+        expect(success).should_be(false)
+        expect(message).should_be("could not deserialize data: error(\"fail\")")
+    end,
+
+
+    ["serialize(data) should return two values in case of success"] = function()
+        local success, result = utils.deserializeTable('{test="value"}')
+        expect(success).should_be(true)
+        expect(result.test).should_be("value")
+    end,
+}
+
 spec.report(true)

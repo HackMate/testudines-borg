@@ -1,4 +1,3 @@
-
 local validFuels = {}
 validFuels["minecraft:coal"] = true
 validFuels["minecraft:lava_bucket"] = true
@@ -11,3 +10,63 @@ function isFuel(detail)
         return false
     end
 end
+
+function writeFile(fileName, data, fsApi)
+    local fsApi = fsApi or fs
+
+    local file = fsApi.open(fileName, "w")
+    if file then
+        file:write(data)
+        file:close()
+        return true
+    end
+    return false
+end
+
+function saveTable(table, fileName)
+    local shallowCopy = {}
+    for key, value in pairs(table) do
+        if type(key) ~= "function" then
+            shallowCopy[key] = value
+        elseif value.__serialize then
+            shallowCopy[key] = value.__serialize()
+        end
+    end
+
+    return writeFile(textutils.serialize(shallowCopy), fileName, fsApi)
+end
+
+-- Helper that allows the serialization of values. All they need to do is implement __serialize
+-- and provide that function through their metatable. This way the table can be deserialized
+-- through load(..).
+function serializeTable(table)
+    local shallowCopy = "{"
+    for key, value in pairs(table) do
+        if type(value) == "table" then
+            local metaTable = getmetatable(value)
+            if metaTable and metaTable["__serialize"] then
+                shallowCopy = string.format("%s%s=%s,", shallowCopy, key, metaTable.__serialize(value))
+            else
+                shallowCopy = string.format("%s%s=%s,", shallowCopy, key, serializeTable(value))
+            end
+        elseif type(value) ~= "function" then
+            shallowCopy = string.format("%s%s=%q,", shallowCopy, key, tostring(value))
+        end
+    end
+    return shallowCopy .. "}"
+end
+
+function deserializeTable(data)
+    if data then
+        local success, value = pcall(load("return " .. data))
+        if success then
+            return success, value
+        else
+            return false, "could not deserialize data: " .. data
+        end
+    else
+        return false
+    end
+end
+
+
