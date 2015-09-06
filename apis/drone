@@ -5,6 +5,10 @@ os.loadAPI("/apis/utils")
 local turtleAPI = turtle or error("Cannot access the turtle api")
 local utils = utils or error("Cannot located utils api")
 
+function setTurtleAPI(api)
+    turtleAPI = api
+end
+
 local function EquipmentHandler()
     local self = {}
 
@@ -98,7 +102,13 @@ local function InspectorHandler()
     return self
 end
 
-local function MovementHandler()
+local Direction = {}
+Direction[position.North] = position.Position(0, 0, -1)
+Direction[position.South] = position.Position(0, 0, 1)
+Direction[position.East] = position.Position(1, 0, 0)
+Direction[position.West] = position.Position(-1, 0, 0)
+
+function MovementHandler(mode)
     local logger = cclog.Logger("MovementHandler")
 
     local self = {}
@@ -106,28 +116,69 @@ local function MovementHandler()
     local state = {fuelLevel = 0, position = position.Position()}
 
     local function loadState()
-        local success, result = utils.loadTable(stateFile)
-        if success then
-            state = result
-            logger.info("loaded position %s", state.position.tostring())
-        else
-            logger.error("could not deserialize home position %s", result)
+        if mode == "persistState" then
+            local success, result = utils.loadTable(stateFile)
+            if success then
+                state = result
+                logger.info("loaded position %s", state.position.tostring())
+            else
+                logger.error("could not deserialize position %s", result)
+            end
         end
     end
 
     local function saveState()
-        local success, message = utils.saveTable(stateFile, state)
-        if not success then
-            logger.warn("Could not save state '" .. message .. "'")
+        if mode == "persistState" then
+            local success, message = utils.saveTable(stateFile, state)
+            if not success then
+                logger.warn("Could not save state %s", message )
+            end
         end
     end
 
-    function self.turnLeft() return turtleAPI.turnLeft() end
-    function self.turnRight() return turtleAPI.turnRight() end
-    function self.forward() return turtleAPI.forward() end
-    function self.back() return turtleAPI.back() end
-    function self.up() return turtleAPI.up() end
-    function self.down() return turtleAPI.down() end
+    function self.turnLeft()
+        if state.position.facing ~= position.Unknown then
+            state.position.facing = (state.position.facing + 2) % 4 + 1
+        end
+        return turtleAPI.turnLeft()
+    end
+
+    function self.turnRight()
+        if state.position.facing ~= position.Unknown then
+            state.position.facing = state.position.facing % 4 + 1
+        end
+        return turtleAPI.turnRight()
+    end
+
+    function self.forward()
+        if turtleAPI.forward() then
+            if state.position.facing ~= position.Unknown then
+                state.position = state.position + Direction[state.position.facing]
+            end
+            return true
+        else
+            return false
+        end
+    end
+
+    function self.back()
+        if turtleAPI.back() then
+            if state.position.facing ~= position.Unknown then
+                state.position = state.position - Direction[state.position.facing]
+            end
+            return true
+        else
+            return false
+        end
+    end
+
+    function self.up()
+        return turtleAPI.up()
+    end
+
+    function self.down()
+        return turtleAPI.down()
+    end
 
     function self.turnAround()
         self.turnLeft()
@@ -150,14 +201,16 @@ local function MovementHandler()
         saveState()
     end
 
-    loadState()
+    if mode == "persistState" then
+        loadState()
+    end
 
     return self
 end
 
 
-function Drone()
-    local _movementHandler = MovementHandler()
+function Drone(mode)
+    local _movementHandler = MovementHandler(mode or "persistState")
     local _inspectorHandler = InspectorHandler()
     local _inventoryHandler = InventoryHandler()
     local _attackHandler = AttackHandler()

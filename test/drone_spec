@@ -1,5 +1,8 @@
 os.loadAPI("/apis/ccspec")
 os.loadAPI("/apis/drone")
+os.loadAPI("/apis/utils")
+os.loadAPI("/apis/model/position")
+
 
 describe "Drone" {
 
@@ -14,6 +17,98 @@ describe "Drone" {
                 expect(drone[field]).should_not_be(nil)
             end
         end
+    end,
+
+}
+
+local MovementHandler = drone.MovementHandler
+local Position = position.Position
+local Facing = position.Facing
+
+local mockAPI = {
+    turnLeft = function() return true end,
+    turnRight = function() return true end,
+    forward = function() return true end,
+    back = function() return true end,
+}
+drone.setTurtleAPI(mockAPI)
+describe "MovementHandler" {
+
+    before = function()
+        local pos = Position(0,0,0, position.North)
+        handler = MovementHandler("withoutStatePersistence")
+        handler.setPosition(pos)
+        pos.facing = position.North
+    end,
+
+    ["should track a left turn"] = function()
+        handler.turnLeft()
+        expect(Facing[handler.getPosition().facing]).should_be(Facing[position.West])
+
+        handler.turnLeft()
+        expect(Facing[handler.getPosition().facing]).should_be(Facing[position.South])
+
+        handler.turnLeft()
+        expect(Facing[handler.getPosition().facing]).should_be(Facing[position.East])
+
+        handler.turnLeft()
+        expect(Facing[handler.getPosition().facing]).should_be(Facing[position.North])
+    end,
+
+    ["should track a right turn"] = function()
+        handler.turnRight()
+        expect(Facing[handler.getPosition().facing]).should_be(Facing[position.East])
+
+        handler.turnRight()
+        expect(Facing[handler.getPosition().facing]).should_be(Facing[position.South])
+
+        handler.turnRight()
+        expect(Facing[handler.getPosition().facing]).should_be(Facing[position.West])
+
+        handler.turnRight()
+        expect(Facing[handler.getPosition().facing]).should_be(Facing[position.North])
+    end,
+
+    ["should track a 180 degree turn"] = function()
+        handler.turnAround()
+        expect(Facing[handler.getPosition().facing]).should_be(Facing[position.South])
+
+        handler.turnAround()
+        expect(Facing[handler.getPosition().facing]).should_be(Facing[position.North])
+    end,
+
+    ["should track forward moves"] = function()
+        handler.forward()
+        local pos = handler.getPosition()
+
+        expect(pos.z).should_be(-1)
+        expect(Facing[pos.facing]).should_be(Facing[position.North])
+    end,
+
+    ["should track backward moves"] = function()
+        handler.back()
+        local pos = handler.getPosition()
+
+        expect(pos.z).should_be(1)
+        expect(Facing[pos.facing]).should_be(Facing[position.North])
+    end,
+
+    ["should track moves to the left"] = function()
+        handler.turnLeft()
+        handler.forward()
+        local pos = handler.getPosition()
+
+        expect(pos.x).should_be(-1)
+        expect(Facing[pos.facing]).should_be(Facing[position.West])
+    end,
+
+    ["should track moves to the right"] = function()
+        handler.turnRight()
+        handler.forward()
+        local pos = handler.getPosition()
+
+        expect(pos.x).should_be(1)
+        expect(Facing[pos.facing]).should_be(Facing[position.East])
     end,
 
 }

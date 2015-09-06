@@ -4,7 +4,7 @@ South = 2
 West = 3
 North = 4
 
-local Facing = {
+Facing = {
     [-1] = "Unknown",
     [1] = "East",
     [2] = "South",
@@ -30,6 +30,24 @@ end
 local positionMetaTable = {
     __eq = function (lhs, rhs)
         return lhs.x == rhs.x and lhs.y == rhs.y and lhs.z == rhs.z
+    end,
+
+    __add = function (lhs, rhs)
+        lhs.x = lhs.x + rhs.x
+        lhs.y = lhs.y + rhs.y
+        lhs.z = lhs.z + rhs.z
+        return lhs
+    end,
+
+    __sub = function (lhs, rhs)
+        lhs.x = lhs.x - rhs.x
+        lhs.y = lhs.y - rhs.y
+        lhs.z = lhs.z - rhs.z
+        return lhs
+    end,
+
+    __tostring = function(pos)
+        return pos.tostring()
     end,
 
     __serialize = function(pos)

@@ -134,5 +134,24 @@ describe "Position serialized" {
 
 }
 
+describe "Position arithmetics" {
+
+    ["should provide the artihmetic __add"] = function()
+        local pos1 = Position(1, 1, 0)
+        local pos2 = Position(2, 1 ,1)
+
+        local diff = pos1 + pos2
+        expect(diff).should_be(Position(3, 2, 1))
+    end,
+
+    ["should provide the artihmetic __sub"] = function()
+        local pos1 = Position(1, 1, 0)
+        local pos2 = Position(2, 1 ,1)
+
+        local diff = pos1 - pos2
+        expect(diff).should_be(Position(-1, 0, -1))
+    end,
+}
+
 
 spec.report(true)
