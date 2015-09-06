@@ -45,6 +45,7 @@ describe "HomeNavigator" {
     end,
 
     ["saveState() - loadState() should not effect isHome()"] = function()
+        homeNavigator.setHome(homePos)
         homeNavigator.saveState()
         homeNavigator.loadState()
         expect(homeNavigator.isHome()).should_be(true)

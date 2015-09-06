@@ -14,7 +14,7 @@ local Facing = {
 
 
 local function isPosition(pos)
-    return pos and pos.x and pos.y and pos.z
+    return pos.isValid
 end
 
 function distance(pos1, pos2)
@@ -25,6 +25,28 @@ function distance(pos1, pos2)
     else
         return math.huge
     end
+end
+
+function serialize(pos)
+    if not isPosition(pos) then
+        error("serialize(pos) needs a valid position")
+    end
+
+    if pos.isValid() then
+        return string.format("position.Position(%s)",
+            pos.tostring())
+    else
+        return "{}"
+    end
+
+end
+
+function deserialize(serializedPos)
+    if serializedPos == "{}" then
+        serializedPos = "position.Position()"
+    end
+    local _, value = pcall(load("return " .. serializedPos))
+    return isPosition(value) and value or Position()
 end
 
 local positionMetaTable = {
@@ -44,7 +66,7 @@ function Position(x, y, z, facing)
 
     function self.tostring()
         if self.isValid() then
-            return self.x .. ", " .. self.y .. ", " .. self.z .. ", " .. Facing[self.facing]
+            return self.x .. ", " .. self.y .. ", " .. self.z .. ", " .. "position." .. Facing[self.facing]
         else
             return "invalid-position"
         end

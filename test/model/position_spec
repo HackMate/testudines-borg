@@ -24,11 +24,11 @@ describe "Position" {
     end,
 
     ["position.tostring() should convert the position to a readable string"] = function()
-        expect(Position(12, 12, 13, North).tostring()).should_be("12, 12, 13, North")
+        expect(Position(12, 12, 13, North).tostring()).should_be("12, 12, 13, position.North")
     end,
 
     ["position.tostring() should include an unknown facing"] = function()
-        expect(Position(12, 100, 13).tostring()).should_be("12, 100, 13, Unknown")
+        expect(Position(12, 100, 13).tostring()).should_be("12, 100, 13, position.Unknown")
     end,
 }
 
@@ -100,5 +100,29 @@ describe "Position.setOrientation(pos)" {
     end,
 
 }
+
+local serialize = position.serialize
+local deserialize = position.deserialize
+
+describe "Position serialized" {
+
+    ["should serialize a valid position"] = function()
+        expect(serialize(Position(1,2,3, North))).should_be("position.Position(1, 2, 3, position.North)")
+    end,
+
+    ["should deserialize a valid position"] = function()
+        expect(serialize(Position())).should_be("{}")
+    end,
+
+    ["should serialize a valid position"] = function()
+        expect(deserialize("position.Position(1, 2, 3, position.North)")).should_be(Position(1,2,3, North))
+    end,
+
+    ["should deserialize an invalid position"] = function()
+        expect(deserialize("{}")).should_be(Position())
+    end,
+
+}
+
 
 spec.report(true)

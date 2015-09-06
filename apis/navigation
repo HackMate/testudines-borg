@@ -22,10 +22,10 @@ function HomeNavigator(network, drone, fileSystem)
         local file = fileSystem.open(state.file, "r")
         if file then
             logger.info("loading home position")
-            local success, result = pcall(load("return " .. file.readAll()))
+            local result = position.deserialize(file.readAll())
             file.close()
-            if success and result then
-                state.home = result
+            if result.pos then
+                state.home = result.pos
                 logger.info("loaded home position %s", result.pos.tostring())
             else
                 logger.error("could not deserialize home position %s", result)
@@ -38,8 +38,7 @@ function HomeNavigator(network, drone, fileSystem)
         if file then
             local pos = "nil"
             if state.home.pos then
-                pos = string.format("position.Position(%d, %d, %d, %d)",
-                    state.home.pos.x, state.home.pos.y, state.home.pos.z, state.home.pos.facing)
+                pos = position.serialize(state.home.pos)
             end
             file.write("{pos=" .. pos .. "}")
             file.close()
@@ -127,7 +126,7 @@ function HomeNavigator(network, drone, fileSystem)
             state.home.pos = pos
             self.saveState()
         else
-            logger.error("setHome needs a valid position")
+            error("setHome needs a valid position")
         end
     end
 
