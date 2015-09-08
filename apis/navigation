@@ -170,6 +170,10 @@ function Navigator(network, drone)
         end
     end
 
+    function self.goTo(pos)
+
+    end
+
     function self.calibrateFacing()
         logger.info("calibrating")
         local pos = self.getPosition()

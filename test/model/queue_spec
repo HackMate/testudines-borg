@@ -1,0 +1,61 @@
+os.loadAPI("/apis/model/queue")
+os.loadAPI("/apis/ccspec")
+
+local Queue = queue.Queue
+
+describe "Queue" {
+    before = function()
+        queue = Queue()
+    end,
+
+    ["Queue:isempty() should be able to determine an empty queue"] = function()
+        expect(queue.isempty()).should_be(true)
+    end,
+
+    ["one element should be poped right if pushed left"] = function()
+        queue.pushleft(1)
+        expect(queue.popright()).should_be(1)
+    end,
+
+    ["one element should be poped left if pushed right"] = function()
+        queue.pushright(2)
+        expect(queue.popleft()).should_be(2)
+    end,
+
+    ["Queue:popright() should behave fifo like"] = function()
+        queue.pushleft(1)
+        queue.pushleft(2)
+        queue.pushleft(3)
+        queue.pushleft(4)
+
+        expect(queue.popright()).should_be(1)
+        expect(queue.popright()).should_be(2)
+        expect(queue.popright()).should_be(3)
+        expect(queue.popright()).should_be(4)
+    end,
+
+
+    ["Queue:popleft() should behave fifo like"] = function()
+        queue.pushright(1)
+        queue.pushright(2)
+        queue.pushright(3)
+        queue.pushright(4)
+
+        expect(queue.popleft()).should_be(1)
+        expect(queue.popleft()).should_be(2)
+        expect(queue.popleft()).should_be(3)
+        expect(queue.popleft()).should_be(4)
+    end,
+
+    ["Queue:popright() should throw an error on an empty queue"] = function()
+        expect(function() queue.popright() end).should_fail_with_message("task queue is empty")
+    end,
+
+    ["Queue:popleft() should throw an error on an empty queue"] = function()
+        expect(function() queue.popleft() end).should_fail_with_message("task queue is empty")
+    end
+
+}
+
+
+spec.report(true)

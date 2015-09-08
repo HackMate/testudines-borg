@@ -1,4 +1,5 @@
 os.loadAPI("/apis/cclog")
+os.loadAPI("/apis/model/queue")
 
 function Task(name, action)
     if not action.execute or type(action.execute) ~= "function" then
@@ -20,50 +21,12 @@ function Task(name, action)
     return self
 end
 
-function TaskQueue()
-    local self = {}
-    local first = 0
-    local last = -1
-
-    function self.pushleft (value)
-        first = first - 1
-        self[first] = value
-    end
-
-    function self.pushright (value)
-        last = last + 1
-        self[last] = value
-    end
-
-    function self.popleft ()
-        if first > last then error("task queue is empty") end
-        local value = self[first]
-        self[first] = nil        -- to allow garbage collection
-        first = first + 1
-        return value
-    end
-
-    function self.popright ()
-        if first > last then error("task queue is empty") end
-        local value = self[last]
-        self[last] = nil         -- to allow garbage collection
-        last = last - 1
-        return value
-    end
-
-    function self.isempty()
-        return first == last + 1
-    end
-
-    return self
-end
-
 function SerialTaskRunner()
     local self = {currentTask = nil}
 
     local logger = cclog.Logger("SerialTaskRunner")
 
-    local taskQueue = TaskQueue()
+    local taskQueue = queue.Queue()
     local currentFilter
     local abortTask = false
 
