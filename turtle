@@ -26,6 +26,7 @@ Orders.gpsPosition    = Task("gpsPosition",    actions.GetGpsPositionAction(netw
 Orders.position       = Task("position",       actions.GetPositionAction(networkAccess, navigator, drone))
 Orders.refuel         = Task("refuel",         actions.RefuelAction(networkAccess, navigator, drone))
 Orders.calibrate      = Task("calibrate",      actions.CalibrateFacingAction(networkAccess, navigator, drone))
+Orders.goHome         = Task("goHome",         actions.GoHomeAction(networkAccess, navigator, drone))
 
 function WireLessCommandReceiver(network, taskRunner)
     local self = {}

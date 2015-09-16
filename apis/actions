@@ -1,5 +1,5 @@
 os.loadAPI("/apis/cclog")
-
+os.loadAPI("/apis/model/position")
 
 function ClearHomeAction(network, navigator)
     local self = {}
@@ -177,6 +177,22 @@ function CalibrateFacingAction(network, navigator, drone)
     function self.execute(commanderId, _)
         navigator.calibrateFacing()
         network.send(commanderId, "adjusted facing: " .. drone.getPosition().tostring())
+    end
+
+    return self
+end
+
+function GoHomeAction(network, navigator, drone)
+    local self = {}
+
+    function self.execute(commanderId, message)
+        local currentPos = drone.getPosition()
+        if not currentPos.isValid() or currentPos.facing ~= position.Unknown then
+            navigator.calibrateFacing()
+        end
+        network.send(commanderId, "moving from position "
+                .. drone.getPosition().tostring() .. " to home: " .. navigator.getHomePosition().tostring())
+        navigator.goTo(navigator.getHomePosition())
     end
 
     return self

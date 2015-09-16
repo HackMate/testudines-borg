@@ -30,18 +30,21 @@ local mockAPI = {
     turnRight = function() return true end,
     forward = function() return true end,
     back = function() return true end,
+    down = function() return true end,
+    up = function() return true end,
 }
 drone.setTurtleAPI(mockAPI)
 describe "MovementHandler" {
 
     before = function()
-        local pos = Position(0,0,0, position.North)
+        pos = Position(0,0,0, position.North)
         handler = MovementHandler("withoutStatePersistence")
         handler.setPosition(pos)
         pos.facing = position.North
     end,
 
-    ["should track a left turn"] = function()
+    ["should track a left turn when facing north"] = function()
+        pos.facing = position.North
         handler.turnLeft()
         expect(Facing[handler.getPosition().facing]).should_be(Facing[position.West])
 
@@ -55,7 +58,38 @@ describe "MovementHandler" {
         expect(Facing[handler.getPosition().facing]).should_be(Facing[position.North])
     end,
 
-    ["should track a right turn"] = function()
+    ["should track a left turn when facing south"] = function()
+        pos.facing = position.South
+        handler.turnLeft()
+        expect(Facing[handler.getPosition().facing]).should_be(Facing[position.East])
+
+        handler.turnLeft()
+        expect(Facing[handler.getPosition().facing]).should_be(Facing[position.North])
+
+        handler.turnLeft()
+        expect(Facing[handler.getPosition().facing]).should_be(Facing[position.West])
+
+        handler.turnLeft()
+        expect(Facing[handler.getPosition().facing]).should_be(Facing[position.South])
+    end,
+
+    ["should track a left turn when facing east"] = function()
+        pos.facing = position.East
+        handler.turnLeft()
+        expect(Facing[handler.getPosition().facing]).should_be(Facing[position.North])
+
+        handler.turnLeft()
+        expect(Facing[handler.getPosition().facing]).should_be(Facing[position.West])
+
+        handler.turnLeft()
+        expect(Facing[handler.getPosition().facing]).should_be(Facing[position.South])
+
+        handler.turnLeft()
+        expect(Facing[handler.getPosition().facing]).should_be(Facing[position.East])
+    end,
+
+    ["should track a right turn when facing north"] = function()
+        pos.facing = position.North
         handler.turnRight()
         expect(Facing[handler.getPosition().facing]).should_be(Facing[position.East])
 
@@ -67,6 +101,21 @@ describe "MovementHandler" {
 
         handler.turnRight()
         expect(Facing[handler.getPosition().facing]).should_be(Facing[position.North])
+    end,
+
+    ["should track a right turn when facing South"] = function()
+        pos.facing = position.South
+        handler.turnRight()
+        expect(Facing[handler.getPosition().facing]).should_be(Facing[position.West])
+
+        handler.turnRight()
+        expect(Facing[handler.getPosition().facing]).should_be(Facing[position.North])
+
+        handler.turnRight()
+        expect(Facing[handler.getPosition().facing]).should_be(Facing[position.East])
+
+        handler.turnRight()
+        expect(Facing[handler.getPosition().facing]).should_be(Facing[position.South])
     end,
 
     ["should track a 180 degree turn"] = function()
@@ -109,6 +158,22 @@ describe "MovementHandler" {
 
         expect(pos.x).should_be(1)
         expect(Facing[pos.facing]).should_be(Facing[position.East])
+    end,
+
+    ["should track up movements"] = function()
+        handler.up()
+        local pos = handler.getPosition()
+
+        expect(pos.y).should_be(1)
+        expect(Facing[pos.facing]).should_be(Facing[position.North])
+    end,
+
+    ["should track down movements"] = function()
+        handler.down()
+        local pos = handler.getPosition()
+
+        expect(pos.y).should_be(-1)
+        expect(Facing[pos.facing]).should_be(Facing[position.North])
     end,
 
 }

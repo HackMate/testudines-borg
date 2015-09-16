@@ -27,6 +27,23 @@ function distance(pos1, pos2)
     end
 end
 
+function necessaryTurns(pos1, pos2)
+    if pos1.facing ~= Unknown then
+        local origFacing = pos1.facing
+        local newFacing = pos1.setOrientation(pos2).facing
+        if origFacing == newFacing then
+            return 0, 0
+        else
+            local diff = origFacing - newFacing
+            if  diff > 0 then
+                return diff, 4 - diff
+            else
+                return diff + 4, math.abs(diff)
+            end
+        end
+    end
+end
+
 local positionMetaTable = {
     __eq = function (lhs, rhs)
         return lhs.x == rhs.x and lhs.y == rhs.y and lhs.z == rhs.z

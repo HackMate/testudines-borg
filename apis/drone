@@ -173,11 +173,19 @@ function MovementHandler(mode)
     end
 
     function self.up()
-        return turtleAPI.up()
+        if turtleAPI.up() then
+            state.position.y = state.position.y + 1
+            return true
+        end
+        return false
     end
 
     function self.down()
-        return turtleAPI.down()
+        if turtleAPI.down() then
+            state.position.y = state.position.y - 1
+            return true
+        end
+        return false
     end
 
     function self.turnAround()
@@ -193,7 +201,7 @@ function MovementHandler(mode)
     function self.getFuelLimit() return turtleAPI.getFuelLimit() end
 
     function self.getPosition()
-        return state.position
+        return position.Position(state.position.x, state.position.y, state.position.z, state.position.facing)
     end
 
     function self.setPosition(pos)

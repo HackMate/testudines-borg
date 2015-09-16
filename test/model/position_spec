@@ -3,81 +3,12 @@ os.loadAPI("/apis/ccspec")
 os.loadAPI("/apis/utils")
 
 local Position = position.Position
-local North = position.North
-
-describe "Position" {
-
-    ["new() should return an invalid position"] = function()
-        expect(Position().isValid()).should_not_be(true)
-    end,
-
-    ["new(10, 12, 123, North) should build a valid position"] = function()
-        local position = Position(10, 12, 123, North)
-        expect(position.isValid()).should_be(true)
-        expect(position.x).should_be(10)
-        expect(position.y).should_be(12)
-        expect(position.z).should_be(123)
-        expect(position.facing).should_be(North)
-    end,
-
-    ["new() should not be comparable to a valid Position"] = function()
-        expect(Position() == Position(0,0,0, North)).should_not_be(true)
-    end,
-
-    ["position.tostring() should convert the position to a readable string"] = function()
-        expect(Position(12, 12, 13, North).tostring()).should_be("12, 12, 13, position.North")
-    end,
-
-    ["position.tostring() should include an unknown facing"] = function()
-        expect(Position(12, 100, 13).tostring()).should_be("12, 100, 13, position.Unknown")
-    end,
-}
-
-describe "Position == Position" {
-
-    before = function ()
-        pos1 = Position(0, 0, 0, position.North)
-        pos2 = Position(0, 0, 1, position.North)
-        pos3 = position.Position(0, 0, 0, position.Unknown)
-    end,
-
-    ["should not be eual for two differing positions"] = function()
-        expect(pos1 == pos2).should_be(false)
-    end,
-
-
-    ["should be equal for the same position"] = function()
-        expect(pos1 == pos1).should_be(true)
-    end,
-
-
-    ["should be equal for two position with differing directions"] = function()
-        expect(pos1 == pos3).should_be(true)
-    end,
-}
-
-local distance = position.distance
-describe "Positon.distance()" {
-
-    ["should be 0 between two equal points"] = function()
-        expect(distance(Position(0, 0, 0), Position(0, 0, 0))).should_be(0)
-    end,
-
-    ["should be correct between two points"] = function()
-        expect(distance(Position(0, 0, 0), Position(0, 0, 10))).should_be(10)
-
-    end,
-
-    ["should be huge between an invalid and invalid position"] = function()
-        expect(distance(Position(0, 0, 0), position.Position())).should_be(math.huge)
-    end,
-
-}
 
 local West = position.West
 local East = position.East
 local North = position.North
 local South = position.South
+local Unknown = position.Unknown
 describe "Position.setOrientation(pos)" {
 
     before = function()
@@ -100,57 +31,62 @@ describe "Position.setOrientation(pos)" {
         expect(pos.setOrientation(Position(-1, 0, 0)).facing).should_be(West)
     end,
 
-}
-
-describe "Position serialized" {
-
-    ["should serialize a valid position within a table"] = function()
-        local table = {pos=Position(1,2,3, North)}
-        expect(utils.serializeTable(table)).should_be("{pos=position.Position(1, 2, 3, position.North),}")
-    end,
-
-    ["should serialize an invalid position within a table"] = function()
-        local table = {pos=Position()}
-        expect(utils.serializeTable(table)).should_be("{pos=position.Position(),}")
-    end,
-
-    ["should serialize a valid position"] = function()
-        local value = "{pos=position.Position(1, 2, 3, position.North),}"
-
-        local success, result = utils.deserializeTable(value)
-
-        expect(success).should_be(true)
-        expect(result.pos).should_be(Position(1,2,3, North))
-    end,
-
-    ["should deserialize an invalid position"] = function()
-        local value = "{pos=position.Position(),}"
-
-        local success, result = utils.deserializeTable(value)
-
-        expect(success).should_be(true)
-        expect(result.pos.isValid()).should_be(false)
+    ["should ignore Up/Down movement"] = function()
+        expect(pos.setOrientation(Position(0, 1, 0)).facing).should_be(Unknown)
+        expect(pos.setOrientation(Position(0, -1, 0)).facing).should_be(Unknown)
     end,
 
 }
 
-describe "Position arithmetics" {
+describe "Position.necessaryTurns(pos1, pos2)" {
 
-    ["should provide the artihmetic __add"] = function()
-        local pos1 = Position(1, 1, 0)
-        local pos2 = Position(2, 1 ,1)
-
-        local diff = pos1 + pos2
-        expect(diff).should_be(Position(3, 2, 1))
+    before = function()
+        origin = Position(0, 0, 0, North)
     end,
 
-    ["should provide the artihmetic __sub"] = function()
-        local pos1 = Position(1, 1, 0)
-        local pos2 = Position(2, 1 ,1)
-
-        local diff = pos1 - pos2
-        expect(diff).should_be(Position(-1, 0, -1))
+    ["should return zero necessary turns for no position change"] = function()
+        local leftTurns, rightTurns = position.necessaryTurns(origin, Position(0, 0, 0))
+        expect(leftTurns).should_be(0)
+        expect(rightTurns).should_be(0)
     end,
+
+    ["should return zero necessary turns for moving straight ahead"] = function()
+        local leftTurns, rightTurns = position.necessaryTurns(origin, Position(0, 0, -1))
+        expect(leftTurns).should_be(0)
+        expect(rightTurns).should_be(0)
+    end,
+
+    ["should return the correct number of turns for a 180 degrees turn"] = function()
+        local leftTurns, rightTurns = position.necessaryTurns(origin, Position(0, 0, 1))
+        expect(leftTurns).should_be(2)
+        expect(rightTurns).should_be(2)
+    end,
+
+    ["should return the correct number of turns for a right turn"] = function()
+        local leftTurns, rightTurns = position.necessaryTurns(origin, Position(1, 0, 0))
+        expect(leftTurns).should_be(3)
+        expect(rightTurns).should_be(1)
+    end,
+
+    ["should return the correct number of turns for a left turn"] = function()
+        local leftTurns, rightTurns = position.necessaryTurns(origin, Position(-1, 0, 0))
+        expect(leftTurns).should_be(1)
+        expect(rightTurns).should_be(3)
+    end,
+
+    ["should return nil in case the origin has no facing"] = function()
+        origin.facing = Unknown
+        local leftTurns, rightTurns = position.necessaryTurns(origin, Position(-1, 0, 0))
+        expect(leftTurns).should_be(nil)
+        expect(rightTurns).should_be(nil)
+    end,
+
+    ["should return zero for up movement"] = function()
+        local leftTurns, rightTurns = position.necessaryTurns(origin, Position(0, 1, 0))
+        expect(leftTurns).should_be(0)
+        expect(rightTurns).should_be(0)
+    end,
+
 }
 
 
