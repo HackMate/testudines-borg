@@ -171,18 +171,21 @@ function Navigator(network, drone)
         end
     end
 
-    local function getNeighbours(pos, goal)
-        local neighbours = {
-            position.Position(pos.x, pos.y, pos.z - 1, position.North), -- North
-            position.Position(pos.x, pos.y, pos.z + 1, position.South), -- South
-            position.Position(pos.x + 1, pos.y, pos.z, position.East), -- East
-            position.Position(pos.x - 1, pos.y, pos.z, position.West), -- West
-            position.Position(pos.x, pos.y + 1, pos.z), -- Up
-            position.Position(pos.x, pos.y - 1, pos.z)  -- Down
-        }
+    local function getNeighbours(pos)
+        return {
+                position.Position(pos.x, pos.y, pos.z - 1, position.North), -- North
+                position.Position(pos.x, pos.y, pos.z + 1, position.South), -- South
+                position.Position(pos.x + 1, pos.y, pos.z, position.East), -- East
+                position.Position(pos.x - 1, pos.y, pos.z, position.West), -- West
+                position.Position(pos.x, pos.y + 1, pos.z), -- Up
+                position.Position(pos.x, pos.y - 1, pos.z)  -- Down
+            }
+    end
 
+    local function getClosestNeighbours(pos, goal)
         -- Sort according to distance to the goal plus a facing bonus if the turtle
         -- will not have to turn to face that position. (Less turns means more speed.)
+        local neighbours = getNeighbours(pos)
         table.sort(neighbours, function(pos1, pos2)
             local dis1, dis2 = position.distance(pos1, goal), position.distance(pos2, goal)
             local function facingBonus(temp)
@@ -242,6 +245,16 @@ function Navigator(network, drone)
         return string.format("%d,%d,%d", pos.x, pos.y, pos.z)
     end
 
+    local function hasNeigbours(pos, visitedPositions)
+        for _, neighbour in pairs(getNeighbours(pos)) do
+            local posKey = string.format("%d,%d,%d", neighbour.x, neighbour.y, neighbour.z)
+            if visitedPositions[posKey] ~= nil then
+                return true
+            end
+        end
+        return false
+    end
+
     function self.goTo(goal)
         -- Pathfinding using a depth-first-search kind of approach until we hit the goal or fail.
         local current = drone.getPosition()
@@ -253,33 +266,40 @@ function Navigator(network, drone)
 
         local visitedPositions = {}
         visitedPositions[positionKey(current)] = current
+        route.pushleft(current)
         local next
         repeat
             next = nil
-            for _, neighbour in pairs(getNeighbours(drone.getPosition(), goal)) do
+            local initalPos = drone.getPosition()
+            for _, neighbour in pairs(getClosestNeighbours(initalPos, goal)) do
                 local posKey = string.format("%d,%d,%d", neighbour.x, neighbour.y, neighbour.z)
                 if visitedPositions[posKey] == nil then
                     next = neighbour
                     visitedPositions[positionKey(next)] = next
-                    break
+
+                    if moveTo(next) then
+                        logger.info("move was successful")
+                        route.pushleft(initalPos)
+                        if next == goal then
+                            logger.info("Arrived at pos: %s", next.tostring())
+                            return true, route
+                        end
+                        break
+                    end
                 end
             end
 
-            if next ~= nil and moveTo(next) then
-                logger.info("move was successful")
-                route.pushleft(next)
-                if next == goal then
-                    logger.info("Arrived at pos: %s", next.tostring())
-                    return true, route
-                end
-            elseif next == nil and not route.isempty() then
+            while next == nil and not route.isempty() do
                 logger.info("retracing step")
                 local stepBack = route.popleft()
                 local success, message = moveTo(stepBack)
                 if success then
-                    next = stepBack
+                    if hasNeigbours(stepBack, visitedPositions) then
+                        next = stepBack
+                        break
+                    end
                 else
-                    logger.error("Could not retracte steps %s", message)
+                    logger.error("Could not retrace step %s", message)
                 end
             end
 
