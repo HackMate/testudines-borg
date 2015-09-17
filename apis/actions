@@ -192,7 +192,7 @@ function GoHomeAction(network, navigator, drone)
         end
         network.send(commanderId, "moving from position "
                 .. drone.getPosition().tostring() .. " to home: " .. navigator.getHomePosition().tostring())
-        navigator.goTo(navigator.getHomePosition())
+        navigator.goHome()
     end
 
     return self
@@ -206,7 +206,7 @@ function RefuelAction(network, navigator, drone)
     local logger = cclog.Logger("RefuelAction")
 
     function self.execute(commanderId, message)
-        if drone.needsFuel() then
+        if navigator.needsFuel() then
             logger.info("I need fuel")
             if drone.hasFuel() then
                 logger.info("I have fuel")
@@ -214,7 +214,7 @@ function RefuelAction(network, navigator, drone)
                     network.send(commanderId, "I used my fuel")
                 end
             end
-            if drone.needsFuel() then
+            if navigator.needsFuel() then
                 network.send(commanderId, "I don't have fuel, going home.")
                 navigator.goHome()
                 if navigator.getFuel() and drone.hasFuel() then

@@ -47,7 +47,7 @@ local function InventoryHandler()
     function self.placeUp() return turtleAPI.placeUp() end
     function self.placeDown() return turtleAPI.placeDown() end
     function self.select(slot) return turtleAPI.select(slot) end
-    function self.getItemDetail(slot) return turtleAPI.getIdemDetail(slot) end
+    function self.getItemDetail(slot) return turtleAPI.getItemDetail(slot) end
     function self.getItemSpace(slot) return turtleAPI.getItemSpace(slot) end
     function self.getItemCount(slot) return turtleAPI.getItemCount(slot) end
 
@@ -71,12 +71,12 @@ local function InventoryHandler()
     end
 
     function self.useFuel(slot)
-        if slot then
+        if slot ~= nil then
             state.fuelInSlot = slot
         end
-        if state.fuelInSlot then
+        if state.fuelInSlot ~= nil then
             self.select(state.fuelInSlot)
-            return self.refuel()
+            return turtleAPI.refuel()
         else
             return false
         end

@@ -163,10 +163,14 @@ function Navigator(network, drone)
     end
 
     function self.goHome()
-        if self.isHome() then
+        if super.isHome() then
+            logger.info("I'm already at home")
             return true
+        elseif super.hasHome() then
+            logger.info("Going home")
+            return self.goTo(super.getHomePosition())
         else
-            logger.info("Navigation: I do not know how to get home")
+            logger.info("I do not have a home")
             return false
         end
     end
@@ -220,7 +224,7 @@ function Navigator(network, drone)
         logger.info("movTo " .. pos.tostring())
         local currentPosition = drone.getPosition()
         if currentPosition == pos then
-            return true
+            return true, "Already at position" .. pos.tostring()
         else
             local hightLevel = currentPosition.y - pos.y
             local move, inspect
@@ -233,7 +237,11 @@ function Navigator(network, drone)
                 inspect, move = drone.inspect, drone.forward
             end
             local blocked, message = inspect()
-            return not blocked and move() or false, message
+            if not blocked and move() then
+                return true
+            else
+                return false, message
+            end
 
         end
     end
