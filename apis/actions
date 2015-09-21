@@ -234,3 +234,41 @@ function RefuelAction(network, navigator, drone)
 
     return self
 end
+
+function CollectAction(network, navigator, drone, worker)
+    local self = {}
+
+    function self.execute(commanderId, message)
+
+        local success, item = drone.inspect()
+        if success then
+            network.send(commanderId, "starting to collect: " .. item.name)
+            worker.collect(function(itemDetail)
+                return string.match(itemDetail.name, item.name)
+            end)
+        else
+            network.send(commanderId, "nothing to collect")
+        end
+    end
+
+    return self
+end
+
+function FellTreeAction(network, navigator, drone, worker)
+    local self = {}
+
+    function self.execute(commanderId, message)
+            network.send(commanderId, "starting to fell tree")
+            worker.collect(function(itemDetail)
+                if string.match(itemDetail.name, "leav") or
+                        string.match(itemDetail.name, "log") or
+                        string.match(itemDetail.name, "tree") then
+                    return true
+                else
+                    return false
+                end
+            end)
+    end
+
+    return self
+end

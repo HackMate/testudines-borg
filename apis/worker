@@ -1,0 +1,83 @@
+os.loadAPI("/apis/cclog")
+os.loadAPI("/apis/utils")
+os.loadAPI("/apis/model/position")
+
+function Worker(network, navigator, drone)
+    local self = {}
+    local logger = cclog.Logger("Worker")
+
+    local function collect(inspect, dig, items)
+        local result, itemDetail = inspect()
+        if result and items(itemDetail) then
+            return dig()
+        end
+        return false
+    end
+
+    local checkedPositions = {}
+    local function hasNotVisitedPosition(pos)
+        return visitedPositions[utils.positionKey(pos)] == nil
+    end
+
+    local function collectNeighbouringItems(item)
+        local start = drone.getPosition()
+        local nextNeighboursToCheck = {}
+
+        local facingPosition = drone.facingPosition()
+        if facingPosition == nil then
+            logger.warn("could not find facingPosition")
+            return {}
+        end
+        local closest = navigator.getClosestNeighbours(start, facingPosition)
+        for _, pos in pairs(closest) do
+
+            if hasNotVisitedPosition(pos) then
+                local height = pos.y - start.y
+                local inspectFn, digFn = drone.inspect, drone.dig
+                if  height > 0 then
+                    inspectFn, digFn = drone.inspectUp, drone.digUp
+                elseif height < 0 then
+                    inspectFn, digFn = drone.inspectDown, drone.digDown
+                end
+
+                navigator.turnTowardPosition(pos)
+                if collect(inspectFn, digFn, item) then
+                    logger.info("collected %s", item)
+                    nextNeighboursToCheck[#nextNeighboursToCheck + 1] = pos
+                    visitedPositions[utils.positionKey(pos)] = pos
+                end
+            end
+
+        end
+
+        return nextNeighboursToCheck
+    end
+
+    function self.collect(items)
+        local start = drone.getPosition()
+
+        local positionsToCheck = { start }
+        visitedPositions = {}
+        local lastPosition = drone.getLastPosition()
+        if lastPosition ~= nil then
+            visitedPositions[#visitedPositions+1] = lastPosition
+        end
+
+        repeat
+            local pos = positionsToCheck[#positionsToCheck]
+            navigator.goTo(pos)
+            positionsToCheck[#positionsToCheck] = nil
+
+            local posWithItem = collectNeighbouringItems(items)
+            for idx = 1, #posWithItem do
+                logger.info("next position to check %s",  posWithItem[idx].tostring())
+                positionsToCheck[#positionsToCheck+1] = posWithItem[idx]
+            end
+
+        until #positionsToCheck == 0
+
+        return navigator.goTo(start)
+    end
+
+    return self
+end

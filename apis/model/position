@@ -109,6 +109,10 @@ function Position(x, y, z, facing)
         return self
     end
 
+    function self.clone()
+        return Position(self.x, self.y, self.z, self.facing)
+    end
+
     return self
 end
 

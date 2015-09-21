@@ -114,6 +114,7 @@ function MovementHandler(mode)
     local self = {}
     local stateFile = ".drone-navigation"
     local state = {fuelLevel = 0, position = position.Position()}
+    local lastPosition
 
     local function loadState()
         if mode == "persistState" then
@@ -152,6 +153,7 @@ function MovementHandler(mode)
 
     function self.forward()
         if turtleAPI.forward() then
+            lastPosition = state.position.clone()
             if state.position.facing ~= position.Unknown then
                 state.position = state.position + Direction[state.position.facing]
             end
@@ -163,6 +165,7 @@ function MovementHandler(mode)
 
     function self.back()
         if turtleAPI.back() then
+            lastPosition = state.position.clone()
             if state.position.facing ~= position.Unknown then
                 state.position = state.position - Direction[state.position.facing]
             end
@@ -174,6 +177,7 @@ function MovementHandler(mode)
 
     function self.up()
         if turtleAPI.up() then
+            lastPosition = state.position.clone()
             state.position.y = state.position.y + 1
             return true
         end
@@ -182,6 +186,7 @@ function MovementHandler(mode)
 
     function self.down()
         if turtleAPI.down() then
+            lastPosition = state.position.clone()
             state.position.y = state.position.y - 1
             return true
         end
@@ -207,6 +212,22 @@ function MovementHandler(mode)
     function self.setPosition(pos)
         state.position = pos
         saveState()
+    end
+
+    function self.facingPosition()
+        if state.position.facing == position.North then
+            return position.Position(state.position.x, state.position.y, state.position.z - 1, state.position.facing)
+        elseif state.position.facing == position.South then
+            return position.Position(state.position.x, state.position.y, state.position.z + 1, state.position.facing)
+        elseif state.position.facing == position.East then
+            return position.Position(state.position.x + 1, state.position.y, state.position.z + 1, state.position.facing)
+        elseif state.position.facing == position.West then
+            return position.Position(state.position.x - 1, state.position.y, state.position.z + 1, state.position.facing)
+        end
+    end
+
+    function self.getLastPosition()
+        return lastPosition
     end
 
     if mode == "persistState" then

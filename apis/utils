@@ -11,6 +11,13 @@ function isFuel(detail)
     end
 end
 
+function positionKey(pos)
+    if pos == nil then
+        error("Cannot create a key for a nil value")
+    end
+    return string.format("%d,%d,%d", pos.x, pos.y, pos.z)
+end
+
 -- Helper that allows the serialization of values. All they need to do is implement __serialize
 -- and provide that function through their metatable. This way the table can be deserialized
 -- through load(..).

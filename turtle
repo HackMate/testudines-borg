@@ -4,6 +4,7 @@ os.loadAPI("apis/drone")
 os.loadAPI("/apis/tasks")
 os.loadAPI("/apis/cclog")
 os.loadAPI("/apis/actions")
+os.loadAPI("/apis/worker")
 
 local logger = cclog.Logger("WireLessCommandReceiver")
 
@@ -11,6 +12,7 @@ local logger = cclog.Logger("WireLessCommandReceiver")
 local networkAccess = network.Network()
 local drone = drone.Drone()
 local navigator = navigation.Navigator(networkAccess, drone)
+local worker = worker.Worker(networkAccess, navigator, drone)
 
 local Task = tasks.Task
 local Orders = {}
@@ -27,6 +29,8 @@ Orders.position       = Task("position",       actions.GetPositionAction(network
 Orders.refuel         = Task("refuel",         actions.RefuelAction(networkAccess, navigator, drone))
 Orders.calibrate      = Task("calibrate",      actions.CalibrateFacingAction(networkAccess, navigator, drone))
 Orders.goHome         = Task("goHome",         actions.GoHomeAction(networkAccess, navigator, drone))
+Orders.collect        = Task("collect",       actions.CollectAction(networkAccess, navigator, drone, worker))
+Orders.fellTree       = Task("fellTree",       actions.FellTreeAction(networkAccess, navigator, drone, worker))
 
 function WireLessCommandReceiver(network, taskRunner)
     local self = {}
