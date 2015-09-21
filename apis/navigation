@@ -195,6 +195,8 @@ function Navigator(network, drone)
             local function facingBonus(temp)
                 if pos.facing ~= position.Unknown and temp.facing == pos.facing then
                     return -1
+                elseif pos.y - temp.y < 0 then
+                    return -1
                 end
                 return 0
             end
@@ -236,11 +238,14 @@ function Navigator(network, drone)
                 turnTowardPosition(pos)
                 inspect, move = drone.inspect, drone.forward
             end
-            local blocked, message = inspect()
+            local blocked, item = inspect()
+            if blocked and string.match(item.name, "water") then
+                blocked = false
+            end
             if not blocked and move() then
                 return true
             else
-                return false, message
+                return false, item
             end
 
         end
