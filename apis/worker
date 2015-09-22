@@ -42,7 +42,7 @@ function Worker(network, navigator, drone)
 
                 navigator.turnTowardPosition(pos)
                 if collect(inspectFn, digFn, item) then
-                    logger.info("collected %s", item)
+                    logger.info("collected %s", item.name)
                     nextNeighboursToCheck[#nextNeighboursToCheck + 1] = pos
                     visitedPositions[utils.positionKey(pos)] = pos
                 end

@@ -244,7 +244,7 @@ function CollectAction(network, navigator, drone, worker)
         if success then
             network.send(commanderId, "starting to collect: " .. item.name)
             worker.collect(function(itemDetail)
-                return string.match(itemDetail.name, item.name)
+                return itemDetail.name == item.name
             end)
         else
             network.send(commanderId, "nothing to collect")

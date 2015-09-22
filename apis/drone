@@ -40,9 +40,20 @@ local function InventoryHandler()
     function self.dropDown(number) return turtleAPI.dropDown(number) end
     function self.transferTo(slot, quantity) return turtleAPI.transferTo(slot, quantity) end
     function self.getSelectedSlot() return turtleAPI.getSelectedSlot() end
-    function self.dig() return turtleAPI.dig() end
-    function self.digUp() return turtleAPI.digUp() end
-    function self.digDown() return turtleAPI.digDown() end
+
+    local function digAction(digFn)
+        local success = digFn()
+        -- If we detect something, it could be sand so we keep digging.
+        if success and turtleAPI.detect() then
+            os.sleep(0.2)
+            return digAction(digFn)
+        end
+        return success
+    end
+    function self.dig() return digAction(turtleAPI.dig) end
+    function self.digUp() return digAction(turtleAPI.digUp) end
+    function self.digDown() return digAction(turtleAPI.digDown) end
+
     function self.place(signText) return turtleAPI.place(signText) end
     function self.placeUp() return turtleAPI.placeUp() end
     function self.placeDown() return turtleAPI.placeDown() end
