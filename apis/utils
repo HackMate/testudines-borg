@@ -2,6 +2,7 @@ local validFuels = {}
 validFuels["minecraft:coal"] = true
 validFuels["minecraft:lava_bucket"] = true
 validFuels["minecraft:coal_block"] = true
+validFuels["minecraft:log"] = true
 
 function isFuel(detail)
     if detail and detail.name and validFuels[detail.name] then
